@@ -1,5 +1,8 @@
 package sample;
 
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
 import fr.slaynash.communication.handlers.OrderedPacketHandler;
 import fr.slaynash.communication.rudp.RUDPClient;
 import fr.slaynash.communication.utils.NetUtils;
@@ -35,26 +38,37 @@ public class Main extends Application {
         startCapturingScreen();
     }
 
+    private WinDef.RECT activeWindoInfo() {
+        char[] buffer = new char[1024 * 2];
+        WinDef.HWND hwnd = User32.INSTANCE.GetForegroundWindow();
+        User32.INSTANCE.GetWindowText(hwnd, buffer, 1024);
+        System.out.println("Active window title: " + Native.toString(buffer));
+        WinDef.RECT rect = new WinDef.RECT();
+        User32.INSTANCE.GetWindowRect(hwnd, rect);
+        System.out.println("rect = " + rect);
+        System.out.println("\n===========================================");
+        return rect;
+    }
+
     private void initServer() {
         try {
             client = new RUDPClient(SERVER_HOST, SERVER_PORT);
             client.setPacketHandler(OrderedPacketHandler.class);
             client.connect();
-        }
-        catch(SocketException e) {
+        } catch (SocketException e) {
             System.out.println("Cannot allow port for the client. Client can't be launched.");
             System.exit(-1);
-        }
-        catch(UnknownHostException e) {
+        } catch (UnknownHostException e) {
             System.out.println("Unknown host: " + SERVER_HOST);
             System.exit(-1);
-        }
-        catch(SocketTimeoutException e) {
+        } catch (SocketTimeoutException e) {
             System.out.println("Connection to " + SERVER_HOST + ":" + SERVER_PORT + " timed out.");
+        } catch (InstantiationException e) {
+        } //Given handler class can't be instantiated.
+        catch (IllegalAccessException e) {
+        } //Given handler class can't be accessed.
+        catch (IOException e) {
         }
-        catch (InstantiationException e) {} //Given handler class can't be instantiated.
-        catch (IllegalAccessException e) {} //Given handler class can't be accessed.
-        catch(IOException e) {}
     }
 
     private void startCapturingScreen() {
@@ -62,11 +76,12 @@ public class Main extends Application {
             @Override
             public void run() {
                 try {
-                    if (isDesiredApplicationIsRunning())
-                        client.sendPacket(takeScreenShot()); //Send packet to the server
-//                    client.sendReliablePacket(new byte[]{0x00}); //Send packet to the server
+                    if (isDesiredApplicationIsRunning()) {
+                        client.sendReliablePacket(takeScreenShot(activeWindoInfo())); //Send packet to the server
+                    }
+//                    client.sendPacket(); //Send packet to the server
                     client.disconnect(); //Disconnect from server
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -76,22 +91,24 @@ public class Main extends Application {
         timer.scheduleAtFixedRate(task, delay, delay);
     }
 
-    private byte[] takeScreenShot() {
+    private byte[] takeScreenShot(WinDef.RECT rect) {
         byte[] empty = new byte[0];
         try {
             Robot robot = new Robot();
             String format = "png";
             String fileName = "FullScreenshot." + format;
+            File screenCapture = new File(fileName);
 
-            Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-            BufferedImage screenFullImage = robot.createScreenCapture(screenRect);
+            Rectangle captureRect = new Rectangle(rect.toRectangle());
+            BufferedImage screenFullImage = robot.createScreenCapture(captureRect);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write( screenFullImage, format, baos );
+            ImageIO.write(screenFullImage, format, baos);
             baos.flush();
             byte[] imageInByte = baos.toByteArray();
             baos.close();
-            ImageIO.write(screenFullImage, format, new File(fileName));
-            System.out.println("A full screenshot saved!");
+            ImageIO.write(screenFullImage, format, screenCapture);
+            System.out.println("A fileName screenshot saved!");
+            System.out.println(" ==> Size" + screenCapture.length());
             return imageInByte;
         } catch (AWTException | IOException ex) {
             System.err.println(ex);
