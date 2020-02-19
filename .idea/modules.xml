@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/WindowsScreenCaptureApp.iml" filepath="$PROJECT_DIR$/WindowsScreenCaptureApp.iml" />
-      <module fileurl="file://$USER_HOME$/Desktop/Capstone/Library/jRUDP-master/jRUDP-master.iml" filepath="$USER_HOME$/Desktop/Capstone/Library/jRUDP-master/jRUDP-master.iml" />
+      <module fileurl="file://$USER_HOME$/Desktop/Demo/jRUDP-master/jRUDP-master.iml" filepath="$USER_HOME$/Desktop/Demo/jRUDP-master/jRUDP-master.iml" />
     </modules>
   </component>
 </project>
