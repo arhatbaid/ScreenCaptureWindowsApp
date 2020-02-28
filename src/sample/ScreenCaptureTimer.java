@@ -23,7 +23,7 @@ public class ScreenCaptureTimer extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         openDialog(primaryStage);
-        startCapturingScreen();
+        takeScreenShot(activeWindowInfo());
     }
 
     private WinDef.RECT activeWindowInfo() {
@@ -38,7 +38,61 @@ public class ScreenCaptureTimer extends Application {
         return rect;
     }
 
-    private void startCapturingScreen() {
+    private void takeScreenShot(WinDef.RECT rect) {
+        try {
+            Robot robot = new Robot();
+            Rectangle captureRect = null;
+            BufferedImage screenFullImage = null;
+            ByteArrayOutputStream baos = null;
+            byte[] imageInByte = null;
+            String format = "jpeg";
+            String fileName = null;
+            File screenCapture = null;
+
+            int leftPos = rect.left;
+            int topPos = rect.top;
+            int width = (rect.right - rect.left) / 16;
+            int height = (rect.bottom - rect.top) / 16;
+
+            for (int index = 0; index < 16; index++) {
+                fileName = new StringBuffer("screen_").append(index).append(format).toString();
+                screenCapture = new File(fileName);
+                captureRect = new Rectangle(leftPos + (width * index), topPos + (height * index), width, height);
+                screenFullImage = robot.createScreenCapture(captureRect);
+                baos = new ByteArrayOutputStream();
+                ImageIO.write(screenFullImage, format, baos);
+                baos.flush();
+                imageInByte = baos.toByteArray();
+                baos.close();
+                ImageIO.write(screenFullImage, format, screenCapture);
+                System.out.println("A fileName " + fileName + " saved!");
+                System.out.println(" ==> Size" + screenCapture.length());
+            }
+        } catch (AWTException | IOException ex) {
+            System.err.println(ex);
+        }
+    }
+
+    private void openDialog(Stage primaryStage) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
+        primaryStage.setTitle("Phantom Eye");
+        primaryStage.setScene(new Scene(root, 300, 275));
+        primaryStage.show();
+    }
+   /* private boolean isDesiredApplicationIsRunning() throws IOException {
+        String line;
+        StringBuilder pidInfo = new StringBuilder();
+        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe");
+        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        while ((line = input.readLine()) != null) {
+            pidInfo.append(line);
+        }
+        input.close();
+        return pidInfo.toString().toLowerCase().contains(APPLICATION_NAME);
+    }
+*/
+
+   /* private void startCapturingScreen() {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
@@ -54,9 +108,9 @@ public class ScreenCaptureTimer extends Application {
         Timer timer = new Timer();
         long delay = 1000L;
         timer.scheduleAtFixedRate(task, delay, delay);
-    }
+    }*/
 
-    private byte[] takeScreenShot(WinDef.RECT rect) {
+    /*private byte[] takeScreenShot(WinDef.RECT rect) {
         byte[] empty = new byte[0];
         try {
             Robot robot = new Robot();
@@ -79,26 +133,8 @@ public class ScreenCaptureTimer extends Application {
             System.err.println(ex);
         }
         return empty;
-    }
+    }*/
 
-    private boolean isDesiredApplicationIsRunning() throws IOException {
-        String line;
-        StringBuilder pidInfo = new StringBuilder();
-        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe");
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        while ((line = input.readLine()) != null) {
-            pidInfo.append(line);
-        }
-        input.close();
-        return pidInfo.toString().toLowerCase().contains(APPLICATION_NAME);
-    }
-
-    private void openDialog(Stage primaryStage) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
-        primaryStage.setTitle("Phantom Eye");
-        primaryStage.setScene(new Scene(root, 300, 275));
-        primaryStage.show();
-    }
 
     public static void main(String[] args) {
         launch(args);
