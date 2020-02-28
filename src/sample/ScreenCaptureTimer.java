@@ -51,24 +51,29 @@ public class ScreenCaptureTimer extends Application {
             String fileName = null;
             File screenCapture = null;
 
+            int noOfPartition = 4;
             int leftPos = rect.left;
             int topPos = rect.top;
-            int width = (rect.right - rect.left) / 16;
-            int height = (rect.bottom - rect.top) / 16;
+            int width = (rect.right - rect.left);
+            int height = (rect.bottom - rect.top);
+            int heightCell = height / noOfPartition;
+            int widthCell = width / noOfPartition;
 
-            for (int index = 0; index < 16; index++) {
-                fileName = new StringBuffer("screen_").append(index).append(format).toString();
-                screenCapture = new File(fileName);
-                captureRect = new Rectangle(leftPos + (width * index), topPos + (height * index), width, height);
-                screenFullImage = robot.createScreenCapture(captureRect);
-                baos = new ByteArrayOutputStream();
-                ImageIO.write(screenFullImage, format, baos);
-                baos.flush();
-                imageInByte = baos.toByteArray();
-                baos.close();
-                ImageIO.write(screenFullImage, format, screenCapture);
-                System.out.println("A fileName " + fileName + " saved!");
-                System.out.println(" ==> Size" + screenCapture.length());
+            for (int indexX = 0; indexX < noOfPartition; indexX++) {
+                for (int indexY = 0; indexY < noOfPartition; indexY++) {
+                    fileName = new StringBuffer("screen_").append((indexX + 1) * (indexY + 1)).append(format).toString();
+                    screenCapture = new File(fileName);
+                    captureRect = new Rectangle(leftPos + (widthCell * indexX), topPos + (heightCell * indexY), widthCell, heightCell);
+                    screenFullImage = robot.createScreenCapture(captureRect);
+                    baos = new ByteArrayOutputStream();
+                    ImageIO.write(screenFullImage, format, baos);
+                    baos.flush();
+                    imageInByte = baos.toByteArray();
+                    baos.close();
+                    ImageIO.write(screenFullImage, format, screenCapture);
+                    System.out.println("A fileName " + fileName + " saved!");
+                    System.out.println(" ==> Size" + screenCapture.length());
+                }
             }
         } catch (AWTException | IOException ex) {
             System.err.println(ex);
