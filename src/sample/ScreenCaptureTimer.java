@@ -12,7 +12,9 @@ import javafx.stage.Stage;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -23,7 +25,7 @@ public class ScreenCaptureTimer extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         openDialog(primaryStage);
-        takeScreenShot(activeWindowInfo());
+        startCapturingScreen();
     }
 
     private WinDef.RECT activeWindowInfo() {
@@ -92,14 +94,12 @@ public class ScreenCaptureTimer extends Application {
     }
 */
 
-   /* private void startCapturingScreen() {
+    private void startCapturingScreen() {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 try {
-                    if (isDesiredApplicationIsRunning()) {
                         takeScreenShot(activeWindowInfo());
-                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -108,7 +108,7 @@ public class ScreenCaptureTimer extends Application {
         Timer timer = new Timer();
         long delay = 1000L;
         timer.scheduleAtFixedRate(task, delay, delay);
-    }*/
+    }
 
     /*private byte[] takeScreenShot(WinDef.RECT rect) {
         byte[] empty = new byte[0];
