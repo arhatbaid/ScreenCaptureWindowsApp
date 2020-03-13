@@ -1,4 +1,4 @@
-package windows_ui;
+package sample;
 
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.User32;
@@ -58,21 +58,22 @@ public class ScreenCaptureTimer extends Application {
             int height = (rect.bottom - rect.top);
             int heightCell = height / noOfPartition;
             int widthCell = width / noOfPartition;
-
+            int partno = 1;
             for (int indexX = 0; indexX < noOfPartition; indexX++) {
                 for (int indexY = 0; indexY < noOfPartition; indexY++) {
-                    fileName = new StringBuffer("screen_").append((indexX + 1) * (indexY + 1)).append(format).toString();
+                    fileName = new StringBuffer("screen_").append(partno).append(".").append(format).toString();
                     screenCapture = new File(fileName);
                     captureRect = new Rectangle(leftPos + (widthCell * indexX), topPos + (heightCell * indexY), widthCell, heightCell);
                     screenFullImage = robot.createScreenCapture(captureRect);
                     baos = new ByteArrayOutputStream();
                     ImageIO.write(screenFullImage, format, baos);
                     baos.flush();
-                    imageInByte = baos.toByteArray();
+                    baos.toByteArray();
                     baos.close();
                     ImageIO.write(screenFullImage, format, screenCapture);
                     System.out.println("A fileName " + fileName + " saved!");
                     System.out.println(" ==> Size" + screenCapture.length());
+                    partno++;
                 }
             }
         } catch (AWTException | IOException ex) {
@@ -104,7 +105,7 @@ public class ScreenCaptureTimer extends Application {
             @Override
             public void run() {
                 try {
-                        takeScreenShot(activeWindowInfo());
+                    takeScreenShot(activeWindowInfo());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
