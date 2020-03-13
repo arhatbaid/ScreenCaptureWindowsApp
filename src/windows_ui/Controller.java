@@ -1,4 +1,4 @@
-package sample;
+package windows_ui;
 
 public class Controller {
 }
