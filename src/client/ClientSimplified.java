@@ -1,6 +1,7 @@
 package client;
 
 import model.Connection;
+import model.ConnectionEstablish;
 import network.ConnectionClass;
 import utils.Utils;
 
@@ -11,12 +12,24 @@ public class ClientSimplified {
 
     public static void main(String[] args){
         setServerInfo();
+
         connectionClass = new ConnectionClass(connection);
         connectionClass.initConnection();
-        connectionClass.sendDataToServer(Utils.getFileBytes());
+        sendConnectionAckToServer();
+        waitingForServerAck();
+    }
+
+    private static void waitingForServerAck() {
         connectionClass.receiveAckFromServer();
     }
 
+
+    private static void sendConnectionAckToServer() {
+        ConnectionEstablish connectionEstablish = new ConnectionEstablish();
+        connectionEstablish.setClient_id(1);
+        connectionEstablish.setRetransmission_timeout(10000);
+        connectionClass.sendAckToServer(connectionEstablish.toByte());
+    }
 
     private static void setServerInfo() {
         connection = new Connection();
