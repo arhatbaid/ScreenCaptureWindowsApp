@@ -16,7 +16,6 @@ import javafx.stage.Stage;
 import org.jutils.jprocesses.JProcesses;
 import org.jutils.jprocesses.model.ProcessInfo;
 
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -32,10 +31,18 @@ public class ScreenCaptureTimer extends Application {
 
     private static List<String> arrProcesses = new ArrayList<>();
     Stage window;
+    private TimerTask task;
 
     public static void main(String[] args) {
         getTask();
         launch(args);
+    }
+
+    private static void getTask() {
+        List<ProcessInfo> processesList = JProcesses.getProcessList();
+        for (final ProcessInfo processInfo : processesList) {
+            arrProcesses.add(processInfo.getName().trim());
+        }
     }
 
     @Override
@@ -98,7 +105,22 @@ public class ScreenCaptureTimer extends Application {
         button.setStyle("-fx-text-fill: green;");
 
         // button.setOnAction(e -> getChoice(choice));
-        button.setOnAction(e -> startCapturingScreen());
+
+        button.setOnAction(e -> {
+            if (button.getText().equals("Start")) {
+//                if(task==null){
+//                    startCapturingScreen();
+//                } else {
+//                    task.run();
+//                }
+               startCapturingScreen();
+                button.setText("Stop");
+            } else {
+                button.setText("Start");
+                task.cancel();
+                task=null;
+            }
+        });
 
         ToggleGroup radio = new ToggleGroup();
         rb1.setToggleGroup(radio);
@@ -111,19 +133,6 @@ public class ScreenCaptureTimer extends Application {
         window.setResizable(false);
         window.setScene(scene);
         window.show();
-
-    }
-
-
-
-
-
-    private static void getTask() {
-        List<ProcessInfo> processesList = JProcesses.getProcessList();
-
-        for (final ProcessInfo processInfo : processesList) {
-            arrProcesses.add(processInfo.getName().trim());
-        }
     }
 
     private WinDef.RECT activeWindowInfo() {
@@ -161,7 +170,7 @@ public class ScreenCaptureTimer extends Application {
             String fileName = null;
             File screenCapture = null;
 
-            int noOfPartition = 4;
+            int noOfPartition = 2;
             int leftPos = rect.left;
             int topPos = rect.top;
             int width = (rect.right - rect.left);
@@ -217,7 +226,7 @@ public class ScreenCaptureTimer extends Application {
     }*/
 
     private void startCapturingScreen() {
-        TimerTask task = new TimerTask() {
+        task = new TimerTask() {
             @Override
             public void run() {
                 try {
