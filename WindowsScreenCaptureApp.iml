@@ -10,5 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="net.java.dev.jna:jna:5.5.0" level="project" />
     <orderEntry type="library" exported="" name="net.java.dev.jna:jna-platform:5.5.0" level="project" />
+    <orderEntry type="library" name="jProcesses-1.6.4" level="project" />
+    <orderEntry type="library" name="WMI4Java-1.6.1" level="project" />
   </component>
 </module>
