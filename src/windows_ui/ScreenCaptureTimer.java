@@ -7,18 +7,14 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.jutils.jprocesses.JProcesses;
 import org.jutils.jprocesses.model.ProcessInfo;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.xml.soap.Text;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -26,14 +22,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ScreenCaptureTimer extends Application {
 
     private static List<String> arrProcesses = new ArrayList<>();
     Stage window;
-    private TimerTask task;
+    private TimerTask task = null;
+    private ScheduledExecutorService service = null;
 
     public static void main(String[] args) {
         getTask();
@@ -95,10 +94,6 @@ public class ScreenCaptureTimer extends Application {
         select.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(select, 0, 5);
         ChoiceBox<String> choice = new ChoiceBox(FXCollections.observableArrayList(arrProcesses));
-        //  ChoiceBox<String> choice = new ChoiceBox<>();
-        //  ComboBox choice = new ComboBox(FXCollections.observableArrayList(Proces));
-//        choice.getItems().add("Ashutosh");
-        //  choice.getItems().addAll(Proces);
         GridPane.setConstraints(choice, 1, 5);
         choice.getSelectionModel().selectedItemProperty().addListener((v, oldvalue, newvalue) -> System.out.println(newvalue));
 
@@ -110,9 +105,9 @@ public class ScreenCaptureTimer extends Application {
 
         button.setOnAction(e -> {
             if (button.getText().equals("Start") && projText.getText().equals("shell") && passtext.getText().equals("1234")) {
-               startCapturingScreen();
+                startCapturingScreen();
                 button.setText("Stop");
-            } else if(button.getText().equals("Start") && ( projText.getText().equals("") || passtext.getText().equals(""))){
+            } else if (button.getText().equals("Start") && (projText.getText().equals("") || passtext.getText().equals(""))) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Error Dialog");
                 alert.setHeaderText("Look, an Error Dialog");
@@ -121,7 +116,8 @@ public class ScreenCaptureTimer extends Application {
             } else {
                 button.setText("Start");
                 task.cancel();
-                task=null;
+                service.shutdown();
+                task = null;
             }
         });
 
@@ -132,7 +128,7 @@ public class ScreenCaptureTimer extends Application {
         GridPane.setConstraints(button, 1, 7);
         grid.getChildren().addAll(Projlabel, projText, password, passtext, time, timetext, mouse, rb1, rb2, select, button, choice);
         Scene scene = new Scene(grid, 650, 270);
-        scene.getStylesheets().add("css/phantom.css");
+        scene.getStylesheets().add("/css/phantom.css");
         window.setResizable(false);
         window.setScene(scene);
         window.show();
@@ -229,6 +225,8 @@ public class ScreenCaptureTimer extends Application {
     }*/
 
     private void startCapturingScreen() {
+        task = null;
+        service = null;
         task = new TimerTask() {
             @Override
             public void run() {
@@ -239,8 +237,9 @@ public class ScreenCaptureTimer extends Application {
                 }
             }
         };
-        Timer timer = new Timer();
+        service = Executors.newSingleThreadScheduledExecutor();
         long delay = 1000L;
-        timer.scheduleAtFixedRate(task, delay, delay);
+        long period = 1000L;
+        service.scheduleAtFixedRate(task, delay, period, TimeUnit.MILLISECONDS);
     }
 }
