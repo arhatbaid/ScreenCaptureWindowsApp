@@ -7,16 +7,18 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.jutils.jprocesses.JProcesses;
 import org.jutils.jprocesses.model.ProcessInfo;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.xml.soap.Text;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -67,7 +69,7 @@ public class ScreenCaptureTimer extends Application {
         javafx.scene.control.Label password = new javafx.scene.control.Label("Password:");
         GridPane.setConstraints(password, 0, 1);
         password.setStyle("-fx-text-fill: #ff9a16;");
-        javafx.scene.control.TextField passtext = new javafx.scene.control.TextField();
+        PasswordField passtext = new PasswordField();
         GridPane.setConstraints(passtext, 1, 1);
 
         //time
@@ -107,14 +109,15 @@ public class ScreenCaptureTimer extends Application {
         // button.setOnAction(e -> getChoice(choice));
 
         button.setOnAction(e -> {
-            if (button.getText().equals("Start")) {
-//                if(task==null){
-//                    startCapturingScreen();
-//                } else {
-//                    task.run();
-//                }
+            if (button.getText().equals("Start") && projText.getText().equals("shell") && passtext.getText().equals("1234")) {
                startCapturingScreen();
                 button.setText("Stop");
+            } else if(button.getText().equals("Start") && ( projText.getText().equals("") || passtext.getText().equals(""))){
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Error Dialog");
+                alert.setHeaderText("Look, an Error Dialog");
+                alert.setContentText("Please insert the username and password!");
+                alert.showAndWait();
             } else {
                 button.setText("Start");
                 task.cancel();
