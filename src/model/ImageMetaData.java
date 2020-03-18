@@ -1,6 +1,9 @@
 package model;
 
-public class ImageMetaData {
+import java.io.Serializable;
+
+public class ImageMetaData implements Serializable {
+    private static final long serialVersionUID = 6529685098267757690L;
     private int client_id = 0;
     private final int seq_no = 1;
     private final int transmission_type = 1;

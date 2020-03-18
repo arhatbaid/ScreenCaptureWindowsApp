@@ -1,6 +1,6 @@
 package model;
 
-public class Connection {
+public class NetworkData {
     private String hostName;
     private int portNumber;
     private String fileName;

@@ -1,6 +1,9 @@
 package model;
 
-public class DataTransfer {
+import java.io.Serializable;
+
+public class DataTransfer implements Serializable {
+    private static final long serialVersionUID = 6529685098267757690L;
     private int client_id = 0;
     private int seq_no = 0;
     private final int transmission_type = 3;
