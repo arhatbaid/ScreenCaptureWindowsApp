@@ -3,9 +3,7 @@ package client;
 import model.*;
 import network.NetworkCalls;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 public class ClientImpl {
     private NetworkCalls networkCalls = null;
@@ -52,7 +50,7 @@ public class ClientImpl {
             System.out.println("DataTransfer ack received = " + receivedObj);
         } else {
             //TODO object corrupt or not identified.
-            throw new Exception("The data is null or not in the proper format");
+//            throw new Exception("The data is null or not in the proper format");
         }
     }
 
@@ -73,10 +71,11 @@ public class ClientImpl {
     }
 
     protected void sendMetadataToServer() {
+        File f = new File("abc.jpeg"); //TODO remove it later on
         ImageMetaData imageMetaData = new ImageMetaData();
         imageMetaData.setClient_id(1);
         imageMetaData.setFile_name("Output.jpeg");
-        imageMetaData.setFile_length(4000);
+        imageMetaData.setFile_length(f.length());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream os = null;
         try {
@@ -89,13 +88,39 @@ public class ClientImpl {
         networkCalls.sendAckToServer(outputStream.toByteArray());
     }
 
+    protected void sendImageFileToServer() throws Exception {
+        boolean failed;
+        byte[] b;
+
+        File f = new File("abc.jpeg");//TODO change
+        FileInputStream fi = new FileInputStream(f);
+        long filesize = f.length(); //TODO change
+        for (int i = 0; i < filesize; i++) {
+
+
+
+            networkCalls.tempImage(fi);
+            /*if (sendCount < 5) {
+                i += l;
+                jpb.setValue(i * 100 / (int) filesize);
+                jpb.setString(jpb.getValue() + " %");
+            } else {
+                JOptionPane.showMessageDialog(null, "Client is not receiving");
+                System.exit(0);
+            }*/
+        }
+        fi.close();
+    }
+
 
     interface Listener {
         void onClientInitializedSuccessfully() throws Exception;
 
         void onConnectEstablishedSuccessfully() throws Exception;
 
-        void onMetaDataSentSuccessfully();
+        void onMetaDataSentSuccessfully() throws Exception;
+
+        void onImageSentSuccessfully();
     }
 
 }

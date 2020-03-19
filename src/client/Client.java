@@ -26,7 +26,13 @@ public class Client implements ClientImpl.Listener {
     }
 
     @Override
-    public void onMetaDataSentSuccessfully() {
+    public void onMetaDataSentSuccessfully() throws Exception {
         System.out.println("Metadata sent successfully");
+        clientImpl.sendImageFileToServer();
+    }
+
+    @Override
+    public void onImageSentSuccessfully() {
+
     }
 }

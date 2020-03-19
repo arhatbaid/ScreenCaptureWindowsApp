@@ -8,7 +8,7 @@ public class ImageMetaData implements Serializable {
     private final int seq_no = 1;
     private final int transmission_type = 1;
     private String file_name = "text";
-    private int file_length = 0;
+    private long file_length = 0;
 
     public int getClient_id() {
         return client_id;
@@ -26,11 +26,11 @@ public class ImageMetaData implements Serializable {
         this.file_name = file_name;
     }
 
-    public int getFile_length() {
+    public long getFile_length() {
         return file_length;
     }
 
-    public void setFile_length(int file_length) {
+    public void setFile_length(long file_length) {
         this.file_length = file_length;
     }
 
