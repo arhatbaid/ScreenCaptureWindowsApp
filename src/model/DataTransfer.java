@@ -1,6 +1,7 @@
 package model;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class DataTransfer implements Serializable {
     private static final long serialVersionUID = 6529685098267757690L;
@@ -8,6 +9,7 @@ public class DataTransfer implements Serializable {
     private int seq_no = 0;
     private final int transmission_type = 3;
     private int is_last_packet = 0;
+    private byte[] arrImage = new byte[65000];
 
     public int getClient_id() {
         return client_id;
@@ -37,6 +39,14 @@ public class DataTransfer implements Serializable {
         return transmission_type;
     }
 
+    public byte[] getArrImage() {
+        return arrImage;
+    }
+
+    public void setArrImage(byte[] arrImage) {
+        this.arrImage = arrImage;
+    }
+
     @Override
     public String toString() {
         return new StringBuffer("client_id = ")
@@ -51,15 +61,8 @@ public class DataTransfer implements Serializable {
                 .append("is_last_packet = ")
                 .append(is_last_packet)
                 .append("\n")
+                .append(Arrays.toString(arrImage))
+                .append("\n")
                 .toString();
-    }
-
-    public byte[] toByte() {
-        byte[] array = new byte[4];
-        array[0] = (byte) client_id;
-        array[1] = (byte) seq_no;
-        array[2] = (byte) transmission_type;
-        array[3] = (byte) is_last_packet;
-        return array;
     }
 }

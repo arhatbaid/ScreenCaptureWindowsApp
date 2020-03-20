@@ -3,6 +3,7 @@ package client;
 import model.*;
 import network.NetworkCalls;
 
+import javax.swing.*;
 import java.io.*;
 
 public class ClientImpl {
@@ -74,7 +75,7 @@ public class ClientImpl {
         File f = new File("abc.jpeg"); //TODO remove it later on
         ImageMetaData imageMetaData = new ImageMetaData();
         imageMetaData.setClient_id(1);
-        imageMetaData.setFile_name("Output.jpeg");
+        imageMetaData.setFile_name("abc.jpeg");
         imageMetaData.setFile_length(f.length());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream os = null;
@@ -90,24 +91,45 @@ public class ClientImpl {
 
     protected void sendImageFileToServer() throws Exception {
         boolean failed;
-        byte[] b;
-
-        File f = new File("abc.jpeg");//TODO change
-        FileInputStream fi = new FileInputStream(f);
-        long filesize = f.length(); //TODO change
-        for (int i = 0; i < filesize; i++) {
-
-
-
-            networkCalls.tempImage(fi);
-            /*if (sendCount < 5) {
+        File imageFile = new File("abc.jpeg");
+        int l = 1, sendCount;
+        long filesize = imageFile.length();
+        FileInputStream fi = new FileInputStream(imageFile);
+        byte[] arrImage = new byte[65000];
+        for (int i = 0; i < filesize; ) {
+            DataTransfer dataTransfer = new DataTransfer();
+            failed = false;
+            l = fi.read(arrImage);
+            dataTransfer.setArrImage(arrImage);
+            sendCount = 0;
+            do {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                ObjectOutputStream os = null;
+                try {
+                    os = new ObjectOutputStream(outputStream);
+                    os.writeObject(dataTransfer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                lastSentObj = dataTransfer;
+                networkCalls.sendAckToServer(outputStream.toByteArray());
+                sendCount++;
+                Thread.sleep(80);
+                try {
+                    String s = networkCalls.receiveTempAckFromServer();
+                    if (s.contains("ACK") == false)
+                        throw new Exception();
+                } catch (Exception ex) {
+                    failed = true;
+                }
+            } while (failed && sendCount < 5);
+            if (sendCount < 5) {
                 i += l;
-                jpb.setValue(i * 100 / (int) filesize);
-                jpb.setString(jpb.getValue() + " %");
+                System.out.println("Progress : " + i * 100 / (int) filesize);
             } else {
                 JOptionPane.showMessageDialog(null, "Client is not receiving");
                 System.exit(0);
-            }*/
+            }
         }
         fi.close();
     }

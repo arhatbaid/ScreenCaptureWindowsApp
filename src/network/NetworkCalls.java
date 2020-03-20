@@ -3,7 +3,6 @@ package network;
 import model.NetworkData;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
@@ -71,40 +70,16 @@ public class NetworkCalls {
         }
     }
 
-    public void sendConnectionRequestToServer(byte[] data) {
+    public String receiveTempAckFromServer() {
+        byte[] data = new byte[65507];
         try {
-            if (dataPacket != null) {
-                dataPacket = new DatagramPacket(data, data.length, dataPacket.getAddress(), dataPacket.getPort());
-            } else {
-                dataPacket = new DatagramPacket(data, data.length, InetAddress.getByName(networkData.getHostName()), networkData.getPortNumber());
-            }
-            socket.send(dataPacket);
+            dataPacket = new DatagramPacket(data, data.length);
+            socket.receive(dataPacket);
+            return new String(dataPacket.getData());
         } catch (IOException e) {
             e.printStackTrace();
+            return "";
         }
     }
-
-    public void tempImage(FileInputStream fi) throws Exception {
-        boolean failed = false;
-        byte[] b = new byte[65507];
-        int sendCount = 0, l = fi.read(b);
-        do {
-            System.out.println("===>Port " + dataPacket.getPort());
-            System.out.println("===>Address " + dataPacket.getAddress());
-            dataPacket = new DatagramPacket(b, l, dataPacket.getAddress(), dataPacket.getPort());
-            socket.send(dataPacket);
-            sendCount++;
-            Thread.sleep(80);
-            try {
-                socket.receive(dataPacket);
-                String s = new String(b);
-                if (s.contains("ACK") == false)
-                    throw new Exception();
-            } catch (Exception ex) {
-                failed = true;
-            }
-        } while (failed && sendCount < 5);
-    }
-
 
 }
