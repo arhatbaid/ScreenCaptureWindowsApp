@@ -1,5 +1,7 @@
-package sample;
+package windows_ui;
 
+import client.Client;
+import client.ClientImpl;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
@@ -18,14 +20,20 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ScreenCaptureTimer extends Application {
+public class ScreenCaptureTimer extends Application implements ClientImpl.Listener {
 
-    private static final String APPLICATION_NAME = "kchrome.exe";
+
+    private static ClientImpl clientImpl = null;
+    private ClientImpl.Listener listener = this;
+    private Client client = null;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         openDialog(primaryStage);
-        startCapturingScreen();
+
+        client = new Client();
+        clientImpl = new ClientImpl(client.listener);
+        clientImpl.initClient();
     }
 
     private WinDef.RECT activeWindowInfo() {
@@ -112,8 +120,9 @@ public class ScreenCaptureTimer extends Application {
             }
         };
         Timer timer = new Timer();
-        long delay = 1000L;
-        timer.scheduleAtFixedRate(task, delay, delay);
+        long delay = 10L;
+        long period = 5000L;
+        timer.scheduleAtFixedRate(task, delay, period);
     }
 
     /*private byte[] takeScreenShot(WinDef.RECT rect) {
@@ -144,5 +153,31 @@ public class ScreenCaptureTimer extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    @Override
+    public void onClientInitializedSuccessfully() throws Exception {
+        System.out.println("Client init successful");
+        startCapturingScreen();
+        clientImpl.sendConnectionAckToServer();
+        clientImpl.waitingForServerAck();
+    }
+
+    @Override
+    public void onConnectEstablishedSuccessfully() throws Exception {
+        System.out.println("Connection with Client established successfully");
+        clientImpl.sendMetadataToServer();
+        clientImpl.waitingForServerAck();
+    }
+
+    @Override
+    public void onMetaDataSentSuccessfully() throws Exception {
+        System.out.println("Metadata sent successfully, ready to send image");
+//        clientImpl.sendImageFileToServer();
+    }
+
+    @Override
+    public void onImageSentSuccessfully() {
+
     }
 }

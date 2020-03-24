@@ -42,8 +42,6 @@ public class NetworkCalls {
         byte[] arrData = new byte[MAX_BUFFER_SIZE];
         dataPacket = new DatagramPacket(arrData, MAX_BUFFER_SIZE);
         try {
-            System.out.println("===>Port " + dataPacket.getPort());
-            System.out.println("===>Address " + dataPacket.getAddress());
             socket.receive(dataPacket);
             arrData = dataPacket.getData();
             ByteArrayInputStream in = new ByteArrayInputStream(arrData);
@@ -62,8 +60,6 @@ public class NetworkCalls {
             } else {
                 dataPacket = new DatagramPacket(data, data.length, InetAddress.getByName(networkData.getHostName()), networkData.getPortNumber());
             }
-            System.out.println("===>Port " + dataPacket.getPort());
-            System.out.println("===>Address " + dataPacket.getAddress());
             socket.send(dataPacket);
         } catch (IOException e) {
             e.printStackTrace();

@@ -2,7 +2,7 @@ package client;
 
 public class Client implements ClientImpl.Listener {
     private static ClientImpl clientImpl = null;
-    private ClientImpl.Listener listener = this;
+    public ClientImpl.Listener listener = this;
 
 
     public static void main(String[] args) throws Exception {

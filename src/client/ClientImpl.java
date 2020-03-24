@@ -17,7 +17,7 @@ public class ClientImpl {
         this.listener = listener;
     }
 
-    protected void initClient() throws Exception {
+    public void initClient() throws Exception {
         networkData = setNetworkData();
         networkCalls = new NetworkCalls(networkData);
         networkCalls.initConnection();
@@ -31,7 +31,7 @@ public class ClientImpl {
         return networkData;
     }
 
-    protected void waitingForServerAck() throws Exception {
+    public void waitingForServerAck() throws Exception {
         Object receivedObj = networkCalls.receiveAckFromServer();
         //TODO Ask for/Do retransmission
         if (receivedObj == null || !(receivedObj instanceof PacketAck)) {
@@ -55,7 +55,7 @@ public class ClientImpl {
         }
     }
 
-    protected void sendConnectionAckToServer() {
+    public void sendConnectionAckToServer() {
         EstablishConnection establishConnection = new EstablishConnection();
         establishConnection.setClient_id(1);
         establishConnection.setRetransmission_timeout(10000);
@@ -71,7 +71,7 @@ public class ClientImpl {
         networkCalls.sendAckToServer(outputStream.toByteArray());
     }
 
-    protected void sendMetadataToServer() {
+    public void sendMetadataToServer() {
         File f = new File("abc.jpeg"); //TODO remove it later on
         ImageMetaData imageMetaData = new ImageMetaData();
         imageMetaData.setClient_id(1);
@@ -89,7 +89,7 @@ public class ClientImpl {
         networkCalls.sendAckToServer(outputStream.toByteArray());
     }
 
-    protected void sendImageFileToServer() throws Exception {
+    public void sendImageFileToServer() throws Exception {
         boolean failed;
         File imageFile = new File("abc.jpeg");
         int l = 1, sendCount;
@@ -135,7 +135,7 @@ public class ClientImpl {
     }
 
 
-    interface Listener {
+    public interface Listener {
         void onClientInitializedSuccessfully() throws Exception;
 
         void onConnectEstablishedSuccessfully() throws Exception;
