@@ -7,7 +7,7 @@ public class Client implements ClientImpl.Listener {
 
     public static void main(String[] args) throws Exception {
         Client client = new Client();
-        clientImpl = new ClientImpl(client.listener);
+        clientImpl = new ClientImpl(client.listener, 0, "projectName", "projectPassword");
         clientImpl.initClient();
     }
 

@@ -4,49 +4,72 @@ import java.io.Serializable;
 
 public class EstablishConnection implements Serializable {
     private static final long serialVersionUID = 6529685098267757690L;
-    private int client_id = 0;
-    private final int seq_no = 0;
-    private final int transmission_type = 0;
-    private long retransmission_timeout = 0;
+    private int clientId = 0;
+    private final int seqNo = 0;
+    private String projectName = "";
+    private String projectPassword = "";
+    private final int transmissionType = 0;
+    private long retransmissionTimeout = 0;
 
-    public long getRetransmission_timeout() {
-        return retransmission_timeout;
+    public int getClientId() {
+        return clientId;
     }
 
-    public void setRetransmission_timeout(long retransmission_timeout) {
-        this.retransmission_timeout = retransmission_timeout;
+    public void setClientId(int clientId) {
+        this.clientId = clientId;
     }
 
-    public int getClient_id() {
-        return client_id;
+    public int getSeqNo() {
+        return seqNo;
     }
 
-    public void setClient_id(int client_id) {
-        this.client_id = client_id;
+    public String getProjectName() {
+        return projectName;
     }
 
-
-    public int getSeq_no() {
-        return seq_no;
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
-    public int getTransmission_type() {
-        return transmission_type;
+    public String getProjectPassword() {
+        return projectPassword;
+    }
+
+    public void setProjectPassword(String projectPassword) {
+        this.projectPassword = projectPassword;
+    }
+
+    public int getTransmissionType() {
+        return transmissionType;
+    }
+
+    public long getRetransmissionTimeout() {
+        return retransmissionTimeout;
+    }
+
+    public void setRetransmissionTimeout(long retransmissionTimeout) {
+        this.retransmissionTimeout = retransmissionTimeout;
     }
 
     @Override
     public String toString() {
         return new StringBuffer("client_id = ")
-                .append(client_id)
+                .append(getClientId())
                 .append("\n")
                 .append("seq_no = ")
-                .append(seq_no)
+                .append(getSeqNo())
+                .append("\n")
+                .append("project_name = ")
+                .append(getProjectName())
+                .append("\n")
+                .append("project_password = ")
+                .append(getProjectPassword())
                 .append("\n")
                 .append("transmission_type = ")
-                .append(transmission_type)
+                .append(getTransmissionType())
                 .append("\n")
                 .append("retransmission_timeout = ")
-                .append(retransmission_timeout)
+                .append(getRetransmissionTimeout())
                 .append("\n")
                 .toString();
     }

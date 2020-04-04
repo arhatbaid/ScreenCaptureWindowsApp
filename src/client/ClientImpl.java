@@ -1,26 +1,36 @@
 package client;
 
 import model.*;
-import network.NetworkCalls;
+import network.NetworkHelper;
+import screencapture.ScreenCaptureHelper;
+import utils.Utils;
 
 import javax.swing.*;
 import java.io.*;
 
 public class ClientImpl {
-    private NetworkCalls networkCalls = null;
+    private NetworkHelper networkHelper = null;
+    private ScreenCaptureHelper screenCaptureHelper = null;
     private NetworkData networkData = null;
     private static Object lastSentObj = null;
     private Listener listener = null;
 
+    private int noOfPartitions = 0;
+    private String projectName = "";
+    private String projectPassword = "";
 
-    public ClientImpl(Listener listener) {
+    public ClientImpl(Listener listener, int noOfPartitions, String projectName, String projectPassword) {
         this.listener = listener;
+        this.noOfPartitions = noOfPartitions;
+        this.projectName = projectName;
+        this.projectPassword = projectPassword;
     }
 
     public void initClient() throws Exception {
+        screenCaptureHelper = new ScreenCaptureHelper();
         networkData = setNetworkData();
-        networkCalls = new NetworkCalls(networkData);
-        networkCalls.initConnection();
+        networkHelper = new NetworkHelper(networkData);
+        networkHelper.initConnection();
         listener.onClientInitializedSuccessfully();
     }
 
@@ -32,7 +42,7 @@ public class ClientImpl {
     }
 
     public void waitingForServerAck() throws Exception {
-        Object receivedObj = networkCalls.receiveAckFromServer();
+        Object receivedObj = networkHelper.receiveAckFromServer();
         //TODO Ask for/Do retransmission
         if (receivedObj == null || !(receivedObj instanceof PacketAck)) {
             throw new Exception("The Ack is null or not in proper format");
@@ -57,36 +67,23 @@ public class ClientImpl {
 
     public void sendConnectionAckToServer() {
         EstablishConnection establishConnection = new EstablishConnection();
-        establishConnection.setClient_id(1);
-        establishConnection.setRetransmission_timeout(10000);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream os = null;
-        try {
-            os = new ObjectOutputStream(outputStream);
-            os.writeObject(establishConnection);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        establishConnection.setClientId(1);
+        establishConnection.setProjectName(projectName);
+        establishConnection.setProjectPassword(projectPassword);
+        establishConnection.setRetransmissionTimeout(10000);
+        byte[] objArray = Utils.convertObjToByteArray(establishConnection);
         lastSentObj = establishConnection;
-        networkCalls.sendAckToServer(outputStream.toByteArray());
+        networkHelper.sendAckToServer(objArray);
     }
 
     public void sendMetadataToServer() {
-        File f = new File("abc.jpeg"); //TODO remove it later on
+        ImageChunksMetaData[] arrImageData = screenCaptureHelper.startCapturingScreen(noOfPartitions);
         ImageMetaData imageMetaData = new ImageMetaData();
-        imageMetaData.setClient_id(1);
-        imageMetaData.setFile_name("abc.jpeg");
-        imageMetaData.setFile_length(f.length());
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream os = null;
-        try {
-            os = new ObjectOutputStream(outputStream);
-            os.writeObject(imageMetaData);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        imageMetaData.setClientId(1);
+        imageMetaData.setArrImageChunks(arrImageData);
+        byte[] objArray = Utils.convertObjToByteArray(imageMetaData);
         lastSentObj = imageMetaData;
-        networkCalls.sendAckToServer(outputStream.toByteArray());
+        networkHelper.sendAckToServer(objArray);
     }
 
     public void sendImageFileToServer() throws Exception {
@@ -112,11 +109,11 @@ public class ClientImpl {
                     e.printStackTrace();
                 }
                 lastSentObj = dataTransfer;
-                networkCalls.sendAckToServer(outputStream.toByteArray());
+                networkHelper.sendAckToServer(outputStream.toByteArray());
                 sendCount++;
                 Thread.sleep(80);
                 try {
-                    String s = networkCalls.receiveTempAckFromServer();
+                    String s = networkHelper.receiveTempAckFromServer();
                     if (s.contains("ACK") == false)
                         throw new Exception();
                 } catch (Exception ex) {

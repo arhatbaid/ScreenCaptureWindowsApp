@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
 
-public class NetworkCalls {
+public class NetworkHelper {
 
     private NetworkData networkData = null;
     private static DatagramSocket socket = null;
@@ -15,7 +15,7 @@ public class NetworkCalls {
     private static DatagramPacket dataPacket = null;
     private static final int MAX_BUFFER_SIZE= 65507;
 
-    public NetworkCalls(NetworkData networkData) {
+    public NetworkHelper(NetworkData networkData) {
         this.networkData = networkData;
     }
 
