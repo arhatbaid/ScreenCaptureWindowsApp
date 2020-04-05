@@ -49,11 +49,12 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     @Override
     public void onMetaDataSentSuccessfully() throws Exception {
         System.out.println("Metadata sent successfully, ready to send image");
-//        clientPresenter.sendImageFileToServer();
+        clientPresenterImpl.sendImageFileToServer();
+        clientPresenterImpl.waitingForServerAck();
     }
 
     @Override
     public void onImageSentSuccessfully() {
-
+        System.out.println("Image sent successfully");
     }
 }

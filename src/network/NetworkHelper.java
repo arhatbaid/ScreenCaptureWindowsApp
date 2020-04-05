@@ -67,7 +67,7 @@ public class NetworkHelper {
     }
 
     public String receiveTempAckFromServer() {
-        byte[] data = new byte[65507];
+        byte[] data = new byte[MAX_BUFFER_SIZE];
         try {
             dataPacket = new DatagramPacket(data, data.length);
             socket.receive(dataPacket);

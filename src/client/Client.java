@@ -6,7 +6,6 @@ import network.NetworkHelper;
 import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
-import javax.swing.*;
 import java.io.*;
 
 public class Client {
@@ -38,13 +37,14 @@ public class Client {
         void sendImageFileToServer() throws Exception;
     }
 
-
     public static class ClientPresenterImpl implements Presenter {
         private NetworkHelper networkHelper = null;
         private ScreenCaptureHelper screenCaptureHelper = null;
         private NetworkData networkData = null;
         private static Object lastSentObj = null;
         private View view;
+        private ImageChunksMetaData[] arrImageData = new ImageChunksMetaData[1];
+        private static final int MAX_IMAGE_DATA_ARRAY_SIZE = 65000;
 
         private int noOfPartitions;
         private String projectName;
@@ -75,21 +75,23 @@ public class Client {
         public void waitingForServerAck() throws Exception {
             Object receivedObj = networkHelper.receiveAckFromServer();
             //TODO Ask for/Do retransmission
-            if (receivedObj == null || !(receivedObj instanceof PacketAck)) {
-                throw new Exception("The Ack is null or not in proper format");
+            if (!(receivedObj instanceof PacketAck)) {
+                throw new Exception("The Ack is not in a proper format");
             }
 
             if (lastSentObj instanceof EstablishConnection) {
                 //Move with the next step with Image MetaData
                 view.onConnectEstablishedSuccessfully();
-                System.out.println("EstablishConnection ack received = " + receivedObj);
+//                System.out.println("EstablishConnection ack received = " + receivedObj);
             } else if (lastSentObj instanceof ImageMetaData) {
                 //Move with the next step with Image Transfer
                 view.onMetaDataSentSuccessfully();
-                System.out.println("ImageMetaData ack received = " + receivedObj);
+//                System.out.println("ImageMetaData ack received = " + receivedObj);
             } else if (lastSentObj instanceof DataTransfer) {
                 //Continue till the last ack is received.
-                System.out.println("DataTransfer ack received = " + receivedObj);
+                    if (((DataTransfer) lastSentObj).getIs_last_packet())
+                        view.onImageSentSuccessfully();
+//                System.out.println("DataTransfer ack received = " + receivedObj);
             } else {
                 throw new Exception("The data is null or not in the proper format");
             }
@@ -109,9 +111,10 @@ public class Client {
 
         @Override
         public void sendMetadataToServer() {
-            ImageChunksMetaData[] arrImageData = screenCaptureHelper.startCapturingScreen(noOfPartitions);
+            arrImageData = screenCaptureHelper.startCapturingScreen(noOfPartitions);
             ImageMetaData imageMetaData = new ImageMetaData();
             imageMetaData.setClientId(1);
+            imageMetaData.setNoOfImages(noOfPartitions * noOfPartitions);
             imageMetaData.setArrImageChunks(arrImageData);
             byte[] objArray = Utils.convertObjToByteArray(imageMetaData);
             lastSentObj = imageMetaData;
@@ -120,46 +123,33 @@ public class Client {
 
         @Override
         public void sendImageFileToServer() throws Exception {
-            boolean failed;
             File imageFile = new File("abc.jpeg");
-            int l = 1, sendCount;
+            int l = 1, seqNo = 2;
             long filesize = imageFile.length();
             FileInputStream fi = new FileInputStream(imageFile);
-            byte[] arrImage = new byte[65000];
+            byte[] arrImageData;
+
             for (int i = 0; i < filesize; ) {
+                arrImageData = new byte[MAX_IMAGE_DATA_ARRAY_SIZE];
                 DataTransfer dataTransfer = new DataTransfer();
-                failed = false;
-                l = fi.read(arrImage);
-                dataTransfer.setArrImage(arrImage);
-                sendCount = 0;
-                do {
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    ObjectOutputStream os;
-                    try {
-                        os = new ObjectOutputStream(outputStream);
-                        os.writeObject(dataTransfer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    lastSentObj = dataTransfer;
-                    networkHelper.sendAckToServer(outputStream.toByteArray());
-                    sendCount++;
-                    Thread.sleep(80);
-                    try {
-                        String s = networkHelper.receiveTempAckFromServer();
-                        if (s.contains("ACK"))
-                            throw new Exception();
-                    } catch (Exception ex) {
-                        failed = true;
-                    }
-                } while (failed && sendCount < 5);
-                if (sendCount < 5) {
-                    i += l;
-                    System.out.println("Progress : " + i * 100 / (int) filesize);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Client is not receiving");
-                    System.exit(0);
+                l = fi.read(arrImageData);
+                if (l < MAX_IMAGE_DATA_ARRAY_SIZE)
+                    dataTransfer.setIs_last_packet(true);
+                dataTransfer.setArrImage(arrImageData);
+                dataTransfer.setSeq_no(seqNo);
+                byte[] arrImageDataObj = Utils.convertObjToByteArray(dataTransfer);
+                lastSentObj = dataTransfer;
+                networkHelper.sendAckToServer(arrImageDataObj);
+                Thread.sleep(80);
+                try {
+                    String s = networkHelper.receiveTempAckFromServer();
+                    if (s.contains("ACK"))
+                        throw new Exception();
+                } catch (Exception ex) {
                 }
+                i += l;
+                seqNo++;
+                System.out.println("Progress : " + i * 100 / (int) filesize);
             }
             fi.close();
         }

@@ -8,7 +8,7 @@ public class DataTransfer implements Serializable {
     private int client_id = 0;
     private int seq_no = 0;
     private final int transmission_type = 3;
-    private int is_last_packet = 0;
+    private boolean is_last_packet = false;
     private byte[] arrImage = new byte[65000];
 
     public int getClient_id() {
@@ -27,11 +27,11 @@ public class DataTransfer implements Serializable {
         this.seq_no = seq_no;
     }
 
-    public int getIs_last_packet() {
+    public boolean getIs_last_packet() {
         return is_last_packet;
     }
 
-    public void setIs_last_packet(int is_last_packet) {
+    public void setIs_last_packet(boolean is_last_packet) {
         this.is_last_packet = is_last_packet;
     }
 
