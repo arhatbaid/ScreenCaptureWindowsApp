@@ -1,7 +1,6 @@
 package model;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class ImageChunksMetaData implements Serializable {
     private static final long serialVersionUID = 6529685098267757690L;

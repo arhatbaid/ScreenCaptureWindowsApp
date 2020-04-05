@@ -1,61 +1,55 @@
 package windows_ui;
 
-import client.ClientImpl;
+import client.Client;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-import java.util.TimerTask;
-import java.util.concurrent.ScheduledExecutorService;
+
+public class ScreenCaptureTimer extends Application implements Client.View {
 
 
-public class ScreenCaptureTimer extends Application implements ClientImpl.Listener {
+    private static Client.ClientPresenterImpl clientPresenterImpl = null;
 
-
-    private static ClientImpl clientImpl = null;
-    private Stage window = null;
+    //TODO params will be linked with UI
     private int noOfPartitions = 4;
     private String projectName = "Phantom4";
     private String projectPassword = "Phantom4";
-
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        openDialog(primaryStage);
-
-        clientImpl = new ClientImpl(this, noOfPartitions, projectName, projectPassword);
-        clientImpl.initClient();
-    }
-
-    private void openDialog(Stage primaryStage) throws IOException {
-        window = primaryStage;
-        window.setTitle("Phantom Eye");
-    }
 
     public static void main(String[] args) {
         launch(args);
     }
 
     @Override
+    public void start(Stage primaryStage) throws Exception {
+        clientPresenterImpl = new Client.ClientPresenterImpl(this, noOfPartitions, projectName, projectPassword);
+        clientPresenterImpl.inflateView(primaryStage);
+        clientPresenterImpl.initClient();
+    }
+
+    @Override
+    public void inflateView(Stage primaryStage) {
+        Stage window = primaryStage;
+        window.setTitle("Phantom Eye");
+    }
+
+    @Override
     public void onClientInitializedSuccessfully() throws Exception {
         System.out.println("Client init successful");
-        clientImpl.sendConnectionAckToServer();
-        clientImpl.waitingForServerAck();
+        clientPresenterImpl.sendConnectionAckToServer();
+        clientPresenterImpl.waitingForServerAck();
     }
 
     @Override
     public void onConnectEstablishedSuccessfully() throws Exception {
         System.out.println("Connection with Client established successfully");
-        clientImpl.sendMetadataToServer();
-        clientImpl.waitingForServerAck();
+        clientPresenterImpl.sendMetadataToServer();
+        clientPresenterImpl.waitingForServerAck();
     }
 
     @Override
     public void onMetaDataSentSuccessfully() throws Exception {
         System.out.println("Metadata sent successfully, ready to send image");
-//        clientImpl.sendImageFileToServer();
+//        clientPresenter.sendImageFileToServer();
     }
 
     @Override
