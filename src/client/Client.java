@@ -7,6 +7,7 @@ import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
 import java.io.*;
+import java.util.Arrays;
 
 public class Client {
 
@@ -43,7 +44,7 @@ public class Client {
         private NetworkData networkData = null;
         private static Object lastSentObj = null;
         private View view;
-        private ImageChunksMetaData[] arrImageData = new ImageChunksMetaData[1];
+        private ImageChunksMetaData[] arrImageChunkData = new ImageChunksMetaData[1];
         private static final int MAX_IMAGE_DATA_ARRAY_SIZE = 65000;
 
         private int noOfPartitions;
@@ -89,8 +90,8 @@ public class Client {
 //                System.out.println("ImageMetaData ack received = " + receivedObj);
             } else if (lastSentObj instanceof DataTransfer) {
                 //Continue till the last ack is received.
-                    if (((DataTransfer) lastSentObj).getIs_last_packet())
-                        view.onImageSentSuccessfully();
+                if (((DataTransfer) lastSentObj).getIsLastPacket() == 1)
+                    view.onImageSentSuccessfully();
 //                System.out.println("DataTransfer ack received = " + receivedObj);
             } else {
                 throw new Exception("The data is null or not in the proper format");
@@ -111,11 +112,11 @@ public class Client {
 
         @Override
         public void sendMetadataToServer() {
-            arrImageData = screenCaptureHelper.startCapturingScreen(noOfPartitions);
+            arrImageChunkData = screenCaptureHelper.startCapturingScreen(noOfPartitions);
             ImageMetaData imageMetaData = new ImageMetaData();
             imageMetaData.setClientId(1);
             imageMetaData.setNoOfImages(noOfPartitions * noOfPartitions);
-            imageMetaData.setArrImageChunks(arrImageData);
+            imageMetaData.setArrImageChunks(arrImageChunkData);
             byte[] objArray = Utils.convertObjToByteArray(imageMetaData);
             lastSentObj = imageMetaData;
             networkHelper.sendAckToServer(objArray);
@@ -123,35 +124,45 @@ public class Client {
 
         @Override
         public void sendImageFileToServer() throws Exception {
-            File imageFile = new File("abc.jpeg");
-            int l = 1, seqNo = 2;
-            long filesize = imageFile.length();
-            FileInputStream fi = new FileInputStream(imageFile);
+            int seqNo = 2;
+            FileInputStream fi;
             byte[] arrImageData;
+            long fileSize;
+            File imageFile;
 
-            for (int i = 0; i < filesize; ) {
-                arrImageData = new byte[MAX_IMAGE_DATA_ARRAY_SIZE];
-                DataTransfer dataTransfer = new DataTransfer();
-                l = fi.read(arrImageData);
-                if (l < MAX_IMAGE_DATA_ARRAY_SIZE)
-                    dataTransfer.setIs_last_packet(true);
-                dataTransfer.setArrImage(arrImageData);
-                dataTransfer.setSeq_no(seqNo);
-                byte[] arrImageDataObj = Utils.convertObjToByteArray(dataTransfer);
-                lastSentObj = dataTransfer;
-                networkHelper.sendAckToServer(arrImageDataObj);
-                Thread.sleep(80);
-                try {
-                    String s = networkHelper.receiveTempAckFromServer();
-                    if (s.contains("ACK"))
-                        throw new Exception();
-                } catch (Exception ex) {
+            for (int index = 0, arrSize = arrImageChunkData.length; index < arrSize; index++) {
+                int l;
+                imageFile = new File(arrImageChunkData[index].getImageName());
+                fileSize = imageFile.length();
+                fi = new FileInputStream(imageFile);
+
+                for (int i = 0; i < fileSize; ) {
+                    arrImageData = new byte[MAX_IMAGE_DATA_ARRAY_SIZE];
+                    DataTransfer dataTransfer = new DataTransfer();
+                    l = fi.read(arrImageData);
+                    if (l < MAX_IMAGE_DATA_ARRAY_SIZE)
+                        dataTransfer.setIsLastPacketOfImageBlock(1);
+                    if(index == arrSize -1){
+                        dataTransfer.setIsLastPacket(1);
+                    }
+                    dataTransfer.setArrImage(arrImageData);
+                    dataTransfer.setSeqNo(seqNo);
+                    byte[] arrImageDataObj = Utils.convertObjToByteArray(dataTransfer);
+                    lastSentObj = dataTransfer;
+                    networkHelper.sendAckToServer(arrImageDataObj);
+                    Thread.sleep(80);
+                    try {
+                        String s = networkHelper.receiveTempAckFromServer();
+                        if (s.contains("ACK"))
+                            throw new Exception();
+                    } catch (Exception ex) {
+                    }
+                    i += l;
+                    seqNo++;
+                    System.out.println("Progress : " + i * 100 / (int) fileSize);
                 }
-                i += l;
-                seqNo++;
-                System.out.println("Progress : " + i * 100 / (int) filesize);
+                fi.close();
             }
-            fi.close();
         }
 
         private static NetworkData setNetworkData() {

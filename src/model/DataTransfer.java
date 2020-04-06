@@ -5,38 +5,47 @@ import java.util.Arrays;
 
 public class DataTransfer implements Serializable {
     private static final long serialVersionUID = 6529685098267757690L;
-    private int client_id = 0;
-    private int seq_no = 0;
-    private final int transmission_type = 3;
-    private boolean is_last_packet = false;
+    private int clientId = 0;
+    private int seqNo = 0;
+    private final int transmissionType = 3;
+    private int isLastPacket = 0;
+    private int isLastPacketOfImageBlock= 0;
     private byte[] arrImage = new byte[65000];
 
-    public int getClient_id() {
-        return client_id;
+    public int getClientId() {
+        return clientId;
     }
 
-    public void setClient_id(int client_id) {
-        this.client_id = client_id;
+    public void setClientId(int clientId) {
+        this.clientId = clientId;
     }
 
-    public int getSeq_no() {
-        return seq_no;
+    public int getSeqNo() {
+        return seqNo;
     }
 
-    public void setSeq_no(int seq_no) {
-        this.seq_no = seq_no;
+    public void setSeqNo(int seqNo) {
+        this.seqNo = seqNo;
     }
 
-    public boolean getIs_last_packet() {
-        return is_last_packet;
+    public int getTransmissionType() {
+        return transmissionType;
     }
 
-    public void setIs_last_packet(boolean is_last_packet) {
-        this.is_last_packet = is_last_packet;
+    public int getIsLastPacket() {
+        return isLastPacket;
     }
 
-    public int getTransmission_type() {
-        return transmission_type;
+    public void setIsLastPacket(int isLastPacket) {
+        this.isLastPacket = isLastPacket;
+    }
+
+    public int getIsLastPacketOfImageBlock() {
+        return isLastPacketOfImageBlock;
+    }
+
+    public void setIsLastPacketOfImageBlock(int isLastPacketOfImageBlock) {
+        this.isLastPacketOfImageBlock = isLastPacketOfImageBlock;
     }
 
     public byte[] getArrImage() {
@@ -50,18 +59,21 @@ public class DataTransfer implements Serializable {
     @Override
     public String toString() {
         return new StringBuffer("client_id = ")
-                .append(client_id)
+                .append(getClientId())
                 .append("\n")
                 .append("seq_no = ")
-                .append(seq_no)
+                .append(getSeqNo())
                 .append("\n")
                 .append("transmission_type = ")
-                .append(transmission_type)
+                .append(getTransmissionType())
                 .append("\n")
                 .append("is_last_packet = ")
-                .append(is_last_packet)
+                .append(getIsLastPacket())
                 .append("\n")
-                .append(Arrays.toString(arrImage))
+                .append("is_last_packet_of_image_block = ")
+                .append(getIsLastPacketOfImageBlock())
+                .append("\n")
+                .append(Arrays.toString(getArrImage()))
                 .append("\n")
                 .toString();
     }
