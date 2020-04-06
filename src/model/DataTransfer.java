@@ -10,6 +10,8 @@ public class DataTransfer implements Serializable {
     private final int transmissionType = 3;
     private int isLastPacket = 0;
     private int isLastPacketOfImageBlock= 0;
+    private int isFirstPacketOfImageBlock= 0;
+    private int currentImageSeqNo = 1;
     private byte[] arrImage = new byte[65000];
 
     public int getClientId() {
@@ -48,6 +50,22 @@ public class DataTransfer implements Serializable {
         this.isLastPacketOfImageBlock = isLastPacketOfImageBlock;
     }
 
+    public int getIsFirstPacketOfImageBlock() {
+        return isFirstPacketOfImageBlock;
+    }
+
+    public void setIsFirstPacketOfImageBlock(int isFirstPacketOfImageBlock) {
+        this.isFirstPacketOfImageBlock = isFirstPacketOfImageBlock;
+    }
+
+    public int getCurrentImageSeqNo() {
+        return currentImageSeqNo;
+    }
+
+    public void setCurrentImageSeqNo(int currentImageSeqNo) {
+        this.currentImageSeqNo = currentImageSeqNo;
+    }
+
     public byte[] getArrImage() {
         return arrImage;
     }
@@ -72,6 +90,12 @@ public class DataTransfer implements Serializable {
                 .append("\n")
                 .append("is_last_packet_of_image_block = ")
                 .append(getIsLastPacketOfImageBlock())
+                .append("\n")
+                .append("is_first_packet_of_image_block = ")
+                .append(getIsFirstPacketOfImageBlock())
+                .append("\n")
+                .append("current_image_seq_no = ")
+                .append(getCurrentImageSeqNo())
                 .append("\n")
                 .append(Arrays.toString(getArrImage()))
                 .append("\n")

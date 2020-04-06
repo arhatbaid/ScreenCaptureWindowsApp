@@ -44,7 +44,7 @@ public class Client {
         private NetworkData networkData = null;
         private static Object lastSentObj = null;
         private View view;
-        private ImageChunksMetaData[] arrImageChunkData = new ImageChunksMetaData[1];
+        private ImageChunksMetaData[] arrImageChunkData;
         private static final int MAX_IMAGE_DATA_ARRAY_SIZE = 65000;
 
         private int noOfPartitions;
@@ -131,7 +131,7 @@ public class Client {
             File imageFile;
 
             for (int index = 0, arrSize = arrImageChunkData.length; index < arrSize; index++) {
-                int l;
+                int l = 0;
                 imageFile = new File(arrImageChunkData[index].getImageName());
                 fileSize = imageFile.length();
                 fi = new FileInputStream(imageFile);
@@ -139,6 +139,10 @@ public class Client {
                 for (int i = 0; i < fileSize; ) {
                     arrImageData = new byte[MAX_IMAGE_DATA_ARRAY_SIZE];
                     DataTransfer dataTransfer = new DataTransfer();
+                    dataTransfer.setCurrentImageSeqNo(index + 1);
+                    if (l == 0){
+                        dataTransfer.setIsFirstPacketOfImageBlock(1);
+                    }
                     l = fi.read(arrImageData);
                     if (l < MAX_IMAGE_DATA_ARRAY_SIZE)
                         dataTransfer.setIsLastPacketOfImageBlock(1);
