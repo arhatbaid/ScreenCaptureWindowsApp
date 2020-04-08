@@ -8,6 +8,8 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
@@ -52,83 +54,104 @@ public class ScreenCaptureTimer extends Application {
         window.setTitle("Phantom Eye");
 
         GridPane grid = new GridPane();
-        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.setPadding(new Insets(20, 20, 20, 20));
         grid.setVgap(10);
         grid.setHgap(10);
 
         //project name
-        javafx.scene.control.Label Projlabel = new javafx.scene.control.Label("Project Name:");
+        Label Projlabel = new Label("Project Name:");
         GridPane.setConstraints(Projlabel, 0, 0);
-        javafx.scene.control.TextField projText = new javafx.scene.control.TextField();
+        TextField projText = new TextField();
         projText.setPrefWidth(20);
         GridPane.setConstraints(projText, 1, 0);
         Projlabel.setStyle("-fx-text-fill: #ff9a16;");
 
         //password
-        javafx.scene.control.Label password = new javafx.scene.control.Label("Password:");
-        GridPane.setConstraints(password, 0, 1);
+        Label password = new Label("Password:");
+        GridPane.setConstraints(password, 0, 2);
         password.setStyle("-fx-text-fill: #ff9a16;");
         PasswordField passtext = new PasswordField();
-        GridPane.setConstraints(passtext, 1, 1);
+        GridPane.setConstraints(passtext, 1, 2);
 
         //time
-        javafx.scene.control.Label time = new javafx.scene.control.Label("Frame rate (Time):");
-        GridPane.setConstraints(time, 0, 2);
+        Label time = new Label("Frame rate :");
+        GridPane.setConstraints(time, 0, 0);
         time.setStyle("-fx-text-fill: #ff9a16;");
-        javafx.scene.control.TextField timetext = new javafx.scene.control.TextField();
-        GridPane.setConstraints(timetext, 1, 2);
+        TextField timetext = new TextField("10");
+        GridPane.setConstraints(timetext, 1, 0);
 
+        //screen selection
+        Label screen_parts = new Label("Screen Partition:");
+        screen_parts.setStyle("-fx-text-fill: #ff9a16;");
+        GridPane.setConstraints(screen_parts, 0, 1);
+        TextField parts = new TextField("4");
+        GridPane.setConstraints(parts, 1, 1);
         //radio for cursor
-        RadioButton rb1 = new RadioButton("Yes");
-        GridPane.setConstraints(rb1, 1, 3);
-        rb1.setStyle("-fx-text-fill: #ff9a16;");
-        RadioButton rb2 = new RadioButton("No");
-        rb2.setStyle("-fx-text-fill: #ff9a16;");
-        GridPane.setConstraints(rb2, 1, 4);
-        javafx.scene.control.Label mouse = new javafx.scene.control.Label("Cursor Control:");
-        mouse.setStyle("-fx-text-fill: #ff9a16;");
-        GridPane.setConstraints(mouse, 0, 3);
+//        RadioButton rb1 = new RadioButton("Yes");
+//        GridPane.setConstraints(rb1, 1, 1);
+//        rb1.setStyle("-fx-text-fill: #ff9a16;");
+//        RadioButton rb2 = new RadioButton("No");
+//        rb2.setStyle("-fx-text-fill: #ff9a16;");
+//        GridPane.setConstraints(rb2, 1, 2);
+//        Label mouse = new Label("Cursor Control:");
+//        mouse.setStyle("-fx-text-fill: #ff9a16;");
+//        GridPane.setConstraints(mouse, 0, 1);
+
+//        ToggleGroup radio = new ToggleGroup();
+//        rb1.setToggleGroup(radio);
+//        rb2.setToggleGroup(radio);
 
         // drop down list
-        javafx.scene.control.Label select = new javafx.scene.control.Label("Select Application:");
+        Label select = new Label("Select Application:");
         select.setStyle("-fx-text-fill: #ff9a16;");
-        GridPane.setConstraints(select, 0, 5);
-        ChoiceBox<String> choice = new ChoiceBox(FXCollections.observableArrayList(arrProcesses));
-        GridPane.setConstraints(choice, 1, 5);
+        GridPane.setConstraints(select, 0, 2);
+        ChoiceBox<String> choice = new ChoiceBox<>();
+        choice.setPrefSize(200.0,10.0);
+        choice.getItems().addAll(arrProcesses);
+        GridPane.setConstraints(choice, 1, 2);
         choice.getSelectionModel().selectedItemProperty().addListener((v, oldvalue, newvalue) -> System.out.println(newvalue));
 
+        //mainscreen button on second screen
+        Button mainScreen = new Button("Main Screen");
+        GridPane.setConstraints(mainScreen, 1, 5);
+        GridPane grid2 = new GridPane();
+        grid2.setPadding(new Insets(10, 10, 10, 10));
+        grid2.setVgap(10);
+        grid2.setHgap(10);
+        grid2.getChildren().addAll(mainScreen, time, timetext, screen_parts, parts, select, choice);
+        Scene advanceScene = new Scene(grid2, 370, 200);
+        Button changescreen = new Button("Advanced");
+        GridPane.setConstraints(changescreen, 0, 5);
+        changescreen.setOnAction(e -> window.setScene(advanceScene));
+
         //start button
-        javafx.scene.control.Button button = new Button("Start");
-        button.setStyle("-fx-text-fill: green;");
+        Button start = new Button("Start");
+        start.setStyle("-fx-text-fill: green;");
 
-        // button.setOnAction(e -> getChoice(choice));
-
-        button.setOnAction(e -> {
-            if (button.getText().equals("Start") && projText.getText().equals("shell") && passtext.getText().equals("1234")) {
+        start.setOnAction(e -> {
+            if (start.getText().equals("Start") && projText.getText().equals("phantom") && passtext.getText().equals("1234")) {
                 startCapturingScreen();
-                button.setText("Stop");
-            } else if (button.getText().equals("Start") && (projText.getText().equals("") || passtext.getText().equals(""))) {
+                start.setText("Stop");
+            } else if (start.getText().equals("Start") && (projText.getText().equals("") || passtext.getText().equals(""))) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Error Dialog");
                 alert.setHeaderText("Look, an Error Dialog");
                 alert.setContentText("Please insert the username and password!");
                 alert.showAndWait();
             } else {
-                button.setText("Start");
+                start.setText("Start");
                 task.cancel();
                 service.shutdown();
                 task = null;
             }
         });
 
-        ToggleGroup radio = new ToggleGroup();
-        rb1.setToggleGroup(radio);
-        rb2.setToggleGroup(radio);
-
-        GridPane.setConstraints(button, 1, 7);
-        grid.getChildren().addAll(Projlabel, projText, password, passtext, time, timetext, mouse, rb1, rb2, select, button, choice);
-        Scene scene = new Scene(grid, 650, 270);
-        scene.getStylesheets().add("/css/phantom.css");
+        GridPane.setConstraints(start, 1, 5);
+        grid.getChildren().addAll(Projlabel, projText, password, passtext, start, changescreen);
+        Scene scene = new Scene(grid, 370, 200);
+        mainScreen.setOnAction(e -> window.setScene(scene));
+        scene.getStylesheets().add("css/phantom.css");
+        advanceScene.getStylesheets().add("css/phantom.css");
         window.setResizable(false);
         window.setScene(scene);
         window.show();
