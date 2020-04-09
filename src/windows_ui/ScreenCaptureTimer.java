@@ -1,56 +1,40 @@
 package windows_ui;
 
-import com.sun.jna.Native;
-import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef;
+import client.Client;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-import org.jutils.jprocesses.JProcesses;
-import org.jutils.jprocesses.model.ProcessInfo;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-public class ScreenCaptureTimer extends Application {
+public class ScreenCaptureTimer extends Application implements Client.View {
 
-    private static List<String> arrProcesses = new ArrayList<>();
-    Stage window;
+    private static Client.ClientPresenterImpl clientPresenterImpl = null;
+    //TODO params will be linked with UI
+    private int noOfPartitions = 3;
+    private String projectName = "phantom";
+    private String projectPassword = "1234";
     private TimerTask task = null;
     private ScheduledExecutorService service = null;
 
     public static void main(String[] args) {
-        getTask();
         launch(args);
     }
 
-    private static void getTask() {
-        List<ProcessInfo> processesList = JProcesses.getProcessList();
-        for (final ProcessInfo processInfo : processesList) {
-            arrProcesses.add(processInfo.getName().trim());
-        }
+    @Override
+    public void start(Stage primaryStage) {
+        clientPresenterImpl = new Client.ClientPresenterImpl(this, noOfPartitions, projectName, projectPassword);
+        clientPresenterImpl.inflateView(primaryStage);
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        window = primaryStage;
+    public void inflateView(Stage primaryStage, ArrayList<String> arrRunningApps) {
+        Stage window = primaryStage;
         window.setTitle("Phantom Eye");
 
         GridPane grid = new GridPane();
@@ -87,27 +71,27 @@ public class ScreenCaptureTimer extends Application {
         TextField parts = new TextField("4");
         GridPane.setConstraints(parts, 1, 1);
         //radio for cursor
-//        RadioButton rb1 = new RadioButton("Yes");
-//        GridPane.setConstraints(rb1, 1, 1);
-//        rb1.setStyle("-fx-text-fill: #ff9a16;");
-//        RadioButton rb2 = new RadioButton("No");
-//        rb2.setStyle("-fx-text-fill: #ff9a16;");
-//        GridPane.setConstraints(rb2, 1, 2);
-//        Label mouse = new Label("Cursor Control:");
-//        mouse.setStyle("-fx-text-fill: #ff9a16;");
-//        GridPane.setConstraints(mouse, 0, 1);
+       /* RadioButton rb1 = new RadioButton("Yes");
+        GridPane.setConstraints(rb1, 1, 1);
+        rb1.setStyle("-fx-text-fill: #ff9a16;");
+        RadioButton rb2 = new RadioButton("No");
+        rb2.setStyle("-fx-text-fill: #ff9a16;");
+        GridPane.setConstraints(rb2, 1, 2);
+        Label mouse = new Label("Cursor Control:");
+        mouse.setStyle("-fx-text-fill: #ff9a16;");
+        GridPane.setConstraints(mouse, 0, 1);
 
-//        ToggleGroup radio = new ToggleGroup();
-//        rb1.setToggleGroup(radio);
-//        rb2.setToggleGroup(radio);
+        ToggleGroup radio = new ToggleGroup();
+        rb1.setToggleGroup(radio);
+        rb2.setToggleGroup(radio);*/
 
         // drop down list
         Label select = new Label("Select Application:");
         select.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(select, 0, 2);
         ChoiceBox<String> choice = new ChoiceBox<>();
-        choice.setPrefSize(200.0,10.0);
-        choice.getItems().addAll(arrProcesses);
+        choice.setPrefSize(200.0, 10.0);
+        choice.getItems().addAll(arrRunningApps);
         GridPane.setConstraints(choice, 1, 2);
         choice.getSelectionModel().selectedItemProperty().addListener((v, oldvalue, newvalue) -> System.out.println(newvalue));
 
@@ -130,15 +114,17 @@ public class ScreenCaptureTimer extends Application {
 
         start.setOnAction(e -> {
             if (start.getText().equals("Start") && projText.getText().equals("phantom") && passtext.getText().equals("1234")) {
-                startCapturingScreen();
+                clientPresenterImpl.setScreenCaptureRunningStatus(true);
                 start.setText("Stop");
             } else if (start.getText().equals("Start") && (projText.getText().equals("") || passtext.getText().equals(""))) {
+                clientPresenterImpl.setScreenCaptureRunningStatus(false);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Error Dialog");
-                alert.setHeaderText("Look, an Error Dialog");
+                alert.setHeaderText("Look, an error dialog");
                 alert.setContentText("Please insert the username and password!");
                 alert.showAndWait();
             } else {
+                clientPresenterImpl.setScreenCaptureRunningStatus(false);
                 start.setText("Start");
                 task.cancel();
                 service.shutdown();
@@ -157,112 +143,38 @@ public class ScreenCaptureTimer extends Application {
         window.show();
     }
 
-    private WinDef.RECT activeWindowInfo() {
-        char[] buffer = new char[1024 * 2];
-        WinDef.HWND hwnd = User32.INSTANCE.GetForegroundWindow();
-        User32.INSTANCE.GetWindowText(hwnd, buffer, 1024);
-        System.out.println("Active window title: " + Native.toString(buffer));
-        WinDef.RECT rect = new WinDef.RECT();
-        User32.INSTANCE.GetWindowRect(hwnd, rect);
-        System.out.println("rect = " + rect);
-        System.out.println("\n===========================================");
-        return rect;
-    }
-   /* private boolean isDesiredApplicationIsRunning() throws IOException {
-        String line;
-        StringBuilder pidInfo = new StringBuilder();
-        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe");
-        BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        while ((line = input.readLine()) != null) {
-            pidInfo.append(line);
-        }
-        input.close();
-        return pidInfo.toString().toLowerCase().contains(APPLICATION_NAME);
-    }
-*/
-
-    private void takeScreenShot(WinDef.RECT rect) {
-        try {
-            Robot robot = new Robot();
-            Rectangle captureRect = null;
-            BufferedImage screenFullImage = null;
-            ByteArrayOutputStream baos = null;
-            byte[] imageInByte = null;
-            String format = "jpeg";
-            String fileName = null;
-            File screenCapture = null;
-
-            int noOfPartition = 2;
-            int leftPos = rect.left;
-            int topPos = rect.top;
-            int width = (rect.right - rect.left);
-            int height = (rect.bottom - rect.top);
-            int heightCell = height / noOfPartition;
-            int widthCell = width / noOfPartition;
-            int partno = 1;
-            for (int indexX = 0; indexX < noOfPartition; indexX++) {
-                for (int indexY = 0; indexY < noOfPartition; indexY++) {
-                    fileName = new StringBuffer("screen_").append(partno).append(".").append(format).toString();
-                    screenCapture = new File(fileName);
-                    captureRect = new Rectangle(leftPos + (widthCell * indexX), topPos + (heightCell * indexY), widthCell, heightCell);
-                    screenFullImage = robot.createScreenCapture(captureRect);
-                    baos = new ByteArrayOutputStream();
-                    ImageIO.write(screenFullImage, format, baos);
-                    baos.flush();
-                    baos.toByteArray();
-                    baos.close();
-                    ImageIO.write(screenFullImage, format, screenCapture);
-                    System.out.println("A fileName " + fileName + " saved!");
-                    System.out.println(" ==> Size" + screenCapture.length());
-                    partno++;
-                }
-            }
-        } catch (AWTException | IOException ex) {
-            System.err.println(ex);
-        }
+    @Override
+    public void startClientInitProcess() {
+        clientPresenterImpl.initClient();
     }
 
-    /*private byte[] takeScreenShot(WinDef.RECT rect) {
-        byte[] empty = new byte[0];
-        try {
-            Robot robot = new Robot();
-            String format = "jpeg";
-            String fileName = "FullScreenshot." + format;
-            File screenCapture = new File(fileName);
+    @Override
+    public void onClientInitializedSuccessfully() throws Exception {
+        clientPresenterImpl.sendConnectionAckToServer();
+        clientPresenterImpl.waitingForServerAck();
+    }
 
-            Rectangle captureRect = new Rectangle(rect.toRectangle());
-            BufferedImage screenFullImage = robot.createScreenCapture(captureRect);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(screenFullImage, format, baos);
-            baos.flush();
-            byte[] imageInByte = baos.toByteArray();
-            baos.close();
-            ImageIO.write(screenFullImage, format, screenCapture);
-            System.out.println("A fileName screenshot saved!");
-            System.out.println(" ==> Size" + screenCapture.length());
-            return imageInByte;
-        } catch (AWTException | IOException ex) {
-            System.err.println(ex);
+    @Override
+    public void onConnectEstablishedSuccessfully() throws Exception {
+        clientPresenterImpl.sendMetadataToServer();
+        clientPresenterImpl.waitingForServerAck();
+    }
+
+    @Override
+    public void onMetaDataSentSuccessfully() throws Exception {
+        clientPresenterImpl.sendImageFileToServer();
+        clientPresenterImpl.waitingForServerAck();
+    }
+
+    @Override
+    public void onImageSentSuccessfully() throws Exception {
+        //Check if the screen capture is enabled/disabled & then init the process again
+        Thread.sleep(5000);
+        if (clientPresenterImpl.isScreenCaptureRunning()) {
+            clientPresenterImpl.sendMetadataToServer();
+            clientPresenterImpl.waitingForServerAck();
+        } else {
+            System.out.println("Screen capture app is disabled");
         }
-        return empty;
-    }*/
-
-    private void startCapturingScreen() {
-        task = null;
-        service = null;
-        task = new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    takeScreenShot(activeWindowInfo());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        service = Executors.newSingleThreadScheduledExecutor();
-        long delay = 1000L;
-        long period = 1000L;
-        service.scheduleAtFixedRate(task, delay, period, TimeUnit.MILLISECONDS);
     }
 }

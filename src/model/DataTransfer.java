@@ -1,62 +1,104 @@
 package model;
 
-public class DataTransfer {
-    private int client_id = 0;
-    private int seq_no = 0;
-    private final int transmission_type = 3;
-    private int is_last_packet = 0;
+import java.io.Serializable;
+import java.util.Arrays;
 
-    public int getClient_id() {
-        return client_id;
+public class DataTransfer implements Serializable {
+    private static final long serialVersionUID = 6529685098267757690L;
+    private int clientId = 0;
+    private int seqNo = 0;
+    private final int transmissionType = 3;
+    private int isLastPacket = 0;
+    private int isLastPacketOfImageBlock= 0;
+    private int isFirstPacketOfImageBlock= 0;
+    private int currentImageSeqNo = 1;
+    private byte[] arrImage = new byte[65000];
+
+    public int getClientId() {
+        return clientId;
     }
 
-    public void setClient_id(int client_id) {
-        this.client_id = client_id;
+    public void setClientId(int clientId) {
+        this.clientId = clientId;
     }
 
-    public int getSeq_no() {
-        return seq_no;
+    public int getSeqNo() {
+        return seqNo;
     }
 
-    public void setSeq_no(int seq_no) {
-        this.seq_no = seq_no;
+    public void setSeqNo(int seqNo) {
+        this.seqNo = seqNo;
     }
 
-    public int getIs_last_packet() {
-        return is_last_packet;
+    public int getTransmissionType() {
+        return transmissionType;
     }
 
-    public void setIs_last_packet(int is_last_packet) {
-        this.is_last_packet = is_last_packet;
+    public int getIsLastPacket() {
+        return isLastPacket;
     }
 
-    public int getTransmission_type() {
-        return transmission_type;
+    public void setIsLastPacket(int isLastPacket) {
+        this.isLastPacket = isLastPacket;
+    }
+
+    public int getIsLastPacketOfImageBlock() {
+        return isLastPacketOfImageBlock;
+    }
+
+    public void setIsLastPacketOfImageBlock(int isLastPacketOfImageBlock) {
+        this.isLastPacketOfImageBlock = isLastPacketOfImageBlock;
+    }
+
+    public int getIsFirstPacketOfImageBlock() {
+        return isFirstPacketOfImageBlock;
+    }
+
+    public void setIsFirstPacketOfImageBlock(int isFirstPacketOfImageBlock) {
+        this.isFirstPacketOfImageBlock = isFirstPacketOfImageBlock;
+    }
+
+    public int getCurrentImageSeqNo() {
+        return currentImageSeqNo;
+    }
+
+    public void setCurrentImageSeqNo(int currentImageSeqNo) {
+        this.currentImageSeqNo = currentImageSeqNo;
+    }
+
+    public byte[] getArrImage() {
+        return arrImage;
+    }
+
+    public void setArrImage(byte[] arrImage) {
+        this.arrImage = arrImage;
     }
 
     @Override
     public String toString() {
         return new StringBuffer("client_id = ")
-                .append(client_id)
+                .append(getClientId())
                 .append("\n")
                 .append("seq_no = ")
-                .append(seq_no)
+                .append(getSeqNo())
                 .append("\n")
                 .append("transmission_type = ")
-                .append(transmission_type)
+                .append(getTransmissionType())
                 .append("\n")
                 .append("is_last_packet = ")
-                .append(is_last_packet)
+                .append(getIsLastPacket())
+                .append("\n")
+                .append("is_last_packet_of_image_block = ")
+                .append(getIsLastPacketOfImageBlock())
+                .append("\n")
+                .append("is_first_packet_of_image_block = ")
+                .append(getIsFirstPacketOfImageBlock())
+                .append("\n")
+                .append("current_image_seq_no = ")
+                .append(getCurrentImageSeqNo())
+                .append("\n")
+                .append(Arrays.toString(getArrImage()))
                 .append("\n")
                 .toString();
-    }
-
-    public byte[] toByte() {
-        byte[] array = new byte[4];
-        array[0] = (byte) client_id;
-        array[1] = (byte) seq_no;
-        array[2] = (byte) transmission_type;
-        array[3] = (byte) is_last_packet;
-        return array;
     }
 }
