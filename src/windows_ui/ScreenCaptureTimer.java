@@ -19,8 +19,8 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     private int noOfPartitions = 3;
     private String projectName = "phantom";
     private String projectPassword = "1234";
-    private TimerTask task = null;
-    private ScheduledExecutorService service = null;
+//    private TimerTask task = null;
+//    private ScheduledExecutorService service = null;
 
     public static void main(String[] args) {
         launch(args);
@@ -114,8 +114,8 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
         start.setOnAction(e -> {
             if (start.getText().equals("Start") && projText.getText().equals("phantom") && passtext.getText().equals("1234")) {
-                clientPresenterImpl.setScreenCaptureRunningStatus(true);
                 start.setText("Stop");
+                clientPresenterImpl.setScreenCaptureRunningStatus(true);
             } else if (start.getText().equals("Start") && (projText.getText().equals("") || passtext.getText().equals(""))) {
                 clientPresenterImpl.setScreenCaptureRunningStatus(false);
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -124,11 +124,11 @@ public class ScreenCaptureTimer extends Application implements Client.View {
                 alert.setContentText("Please insert the username and password!");
                 alert.showAndWait();
             } else {
-                clientPresenterImpl.setScreenCaptureRunningStatus(false);
                 start.setText("Start");
-                task.cancel();
-                service.shutdown();
-                task = null;
+                clientPresenterImpl.setScreenCaptureRunningStatus(false);
+//                task.cancel();
+//                service.shutdown();
+//                task = null;
             }
         });
 

@@ -3,12 +3,15 @@ package client;
 import javafx.stage.Stage;
 import model.*;
 import network.NetworkHelper;
+import org.jutils.jprocesses.JProcesses;
+import org.jutils.jprocesses.model.ProcessInfo;
 import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Client {
 
@@ -69,7 +72,7 @@ public class Client {
         @Override
         public void inflateView(Stage primaryStage) {
             ArrayList<String> arrRunningApps = new ArrayList<>();
-            try {
+           /* try {
                 String line;
                 HashMap<String, String> map = new HashMap<>();
                 StringBuilder pidInfo = new StringBuilder();
@@ -90,6 +93,11 @@ public class Client {
                 System.out.println(pidInfo.toString());
             } catch (IOException e) {
                 e.printStackTrace();
+            }*/
+
+            List<ProcessInfo> processesList = JProcesses.getProcessList();
+            for (final ProcessInfo processInfo : processesList) {
+                arrRunningApps.add(processInfo.getName().trim());
             }
 
             view.inflateView(primaryStage, arrRunningApps);
@@ -174,7 +182,7 @@ public class Client {
                     }
                     i += l;
                     seqNo++;
-                    System.out.println("Progress : " + i * 100 / (int) fileSize);
+//                    System.out.println("Progress : " + i * 100 / (int) fileSize);
                 }
                 fi.close();
             }
