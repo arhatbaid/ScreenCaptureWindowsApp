@@ -3,16 +3,22 @@ package client;
 import javafx.stage.Stage;
 import model.*;
 import network.NetworkHelper;
+import org.jutils.jprocesses.JProcesses;
+import org.jutils.jprocesses.model.ProcessInfo;
 import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
 import java.io.*;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class Client {
 
     public interface View {
-        void inflateView(Stage primaryStage);
+        void inflateView(Stage primaryStage, ArrayList<String> arrRunningApps);
+
+        void startClientInitProcess();
 
         void onClientInitializedSuccessfully() throws Exception;
 
@@ -20,12 +26,16 @@ public class Client {
 
         void onMetaDataSentSuccessfully() throws Exception;
 
-        void onImageSentSuccessfully();
+        void onImageSentSuccessfully() throws Exception;
     }
 
 
     public interface Presenter {
         void inflateView(Stage primaryStage);
+
+        void setScreenCaptureRunningStatus(boolean isAppRunning);
+
+        boolean isScreenCaptureRunning();
 
         void initClient() throws Exception;
 
@@ -39,13 +49,14 @@ public class Client {
     }
 
     public static class ClientPresenterImpl implements Presenter {
+        private static final int MAX_IMAGE_DATA_ARRAY_SIZE = 65000;
+        private static Object lastSentObj = null;
         private NetworkHelper networkHelper = null;
         private ScreenCaptureHelper screenCaptureHelper = null;
         private NetworkData networkData = null;
-        private static Object lastSentObj = null;
         private View view;
+        private boolean isAppRunning = false;
         private ImageChunksMetaData[] arrImageChunkData;
-        private static final int MAX_IMAGE_DATA_ARRAY_SIZE = 65000;
 
         private int noOfPartitions;
         private String projectName;
@@ -60,41 +71,49 @@ public class Client {
 
         @Override
         public void inflateView(Stage primaryStage) {
-            view.inflateView(primaryStage);
-        }
+            ArrayList<String> arrRunningApps = new ArrayList<>();
+           /* try {
+                String line;
+                HashMap<String, String> map = new HashMap<>();
+                StringBuilder pidInfo = new StringBuilder();
+//        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe /nh");
+                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq patel \" /fi \"status eq running\"");
+                BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String[] arrTemp;
+                while ((line = input.readLine()) != null) {
+                    arrTemp = line.trim().replace("\"", "").split(",");
+                    String appName = arrTemp[0].replace(".exe", "");
+                    if (!map.containsKey(appName)) {
+                        map.put(appName, arrTemp[1]);
+                        arrRunningApps.add(appName);
+                        pidInfo.append(appName).append("\n");
+                    }
+                }
+                input.close();
+                System.out.println(pidInfo.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }*/
 
-        @Override
-        public void initClient() throws Exception {
-            screenCaptureHelper = new ScreenCaptureHelper();
-            networkData = setNetworkData();
-            networkHelper = new NetworkHelper(networkData);
-            networkHelper.initConnection();
-            view.onClientInitializedSuccessfully();
-        }
-
-        @Override
-        public void waitingForServerAck() throws Exception {
-            Object receivedObj = networkHelper.receiveAckFromServer();
-            //TODO Ask for/Do retransmission
-            if (!(receivedObj instanceof PacketAck)) {
-                throw new Exception("The Ack is not in a proper format");
+            List<ProcessInfo> processesList = JProcesses.getProcessList();
+            for (final ProcessInfo processInfo : processesList) {
+                arrRunningApps.add(processInfo.getName().trim());
             }
 
-            if (lastSentObj instanceof EstablishConnection) {
-                //Move with the next step with Image MetaData
-                view.onConnectEstablishedSuccessfully();
-//                System.out.println("EstablishConnection ack received = " + receivedObj);
-            } else if (lastSentObj instanceof ImageMetaData) {
-                //Move with the next step with Image Transfer
-                view.onMetaDataSentSuccessfully();
-//                System.out.println("ImageMetaData ack received = " + receivedObj);
-            } else if (lastSentObj instanceof DataTransfer) {
-                //Continue till the last ack is received.
-                if (((DataTransfer) lastSentObj).getIsLastPacket() == 1)
-                    view.onImageSentSuccessfully();
-//                System.out.println("DataTransfer ack received = " + receivedObj);
-            } else {
-                throw new Exception("The data is null or not in the proper format");
+            view.inflateView(primaryStage, arrRunningApps);
+        }
+
+        @Override
+        public void initClient() {
+            try {
+                screenCaptureHelper = new ScreenCaptureHelper();
+                networkData = setNetworkData();
+                networkHelper = new NetworkHelper(networkData);
+                networkHelper.initConnection();
+                System.out.println("Client init successful");
+                view.onClientInitializedSuccessfully();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -140,13 +159,13 @@ public class Client {
                     arrImageData = new byte[MAX_IMAGE_DATA_ARRAY_SIZE];
                     DataTransfer dataTransfer = new DataTransfer();
                     dataTransfer.setCurrentImageSeqNo(index + 1);
-                    if (l == 0){
+                    if (l == 0) {
                         dataTransfer.setIsFirstPacketOfImageBlock(1);
                     }
                     l = fi.read(arrImageData);
                     if (l < MAX_IMAGE_DATA_ARRAY_SIZE)
                         dataTransfer.setIsLastPacketOfImageBlock(1);
-                    if(index == arrSize -1){
+                    if (index == arrSize - 1) {
                         dataTransfer.setIsLastPacket(1);
                     }
                     dataTransfer.setArrImage(arrImageData);
@@ -163,9 +182,58 @@ public class Client {
                     }
                     i += l;
                     seqNo++;
-                    System.out.println("Progress : " + i * 100 / (int) fileSize);
+//                    System.out.println("Progress : " + i * 100 / (int) fileSize);
                 }
                 fi.close();
+            }
+        }
+
+        @Override
+        public void waitingForServerAck() throws Exception {
+            Object receivedObj = networkHelper.receiveAckFromServer();
+            //TODO Ask for/Do retransmission
+            if (!(receivedObj instanceof PacketAck)) {
+                throw new Exception("The Ack is not in a proper format");
+            }
+
+            if (lastSentObj instanceof EstablishConnection) {
+                //Move with the next step with Image MetaData
+                System.out.println("Connection with Client established successfully");
+                view.onConnectEstablishedSuccessfully();
+//                System.out.println("EstablishConnection ack received = " + receivedObj);
+            } else if (lastSentObj instanceof ImageMetaData) {
+                //Move with the next step with Image Transfer
+                System.out.println("Metadata sent successfully, ready to send image");
+                view.onMetaDataSentSuccessfully();
+//                System.out.println("ImageMetaData ack received = " + receivedObj);
+            } else if (lastSentObj instanceof DataTransfer) {
+                //Continue till the last ack is received.
+                if (((DataTransfer) lastSentObj).getIsLastPacket() == 1) {
+                    System.out.println("Image sent successfully");
+                    view.onImageSentSuccessfully();
+                }
+//                System.out.println("DataTransfer ack received = " + receivedObj);
+            } else {
+                throw new Exception("The data is null or not in the proper format");
+            }
+        }
+
+        @Override
+        public boolean isScreenCaptureRunning() {
+            return isAppRunning;
+        }
+
+        @Override
+        public void setScreenCaptureRunningStatus(boolean isAppRunning) {
+            this.isAppRunning = isAppRunning;
+            try {
+                if (lastSentObj == null) {
+                    view.startClientInitProcess();
+                } else {
+                    view.onImageSentSuccessfully();
+                }
+            } catch (Exception e) {
+
             }
         }
 
