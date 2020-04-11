@@ -3,8 +3,8 @@ package client;
 import javafx.stage.Stage;
 import model.*;
 import network.NetworkHelper;
-import org.jutils.jprocesses.JProcesses;
-import org.jutils.jprocesses.model.ProcessInfo;
+//import org.jutils.jprocesses.JProcesses;
+//import org.jutils.jprocesses.model.ProcessInfo;
 import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
@@ -39,9 +39,11 @@ public class Client {
 
         void initClient() throws Exception;
 
+        void startScreenCapturing();
+
         void waitingForServerAck() throws Exception;
 
-        void sendConnectionAckToServer();
+        void sendConnectionAckToServer(int noOfPartitions, String projectName, String projectPassword);
 
         void sendMetadataToServer();
 
@@ -62,17 +64,14 @@ public class Client {
         private String projectName;
         private String projectPassword;
 
-        public ClientPresenterImpl(View view, int noOfPartitions, String projectName, String projectPassword) {
+        public ClientPresenterImpl(View view) {
             this.view = view;
-            this.noOfPartitions = noOfPartitions;
-            this.projectName = projectName;
-            this.projectPassword = projectPassword;
         }
 
         @Override
         public void inflateView(Stage primaryStage) {
             ArrayList<String> arrRunningApps = new ArrayList<>();
-           /* try {
+            try {
                 String line;
                 HashMap<String, String> map = new HashMap<>();
                 StringBuilder pidInfo = new StringBuilder();
@@ -93,12 +92,12 @@ public class Client {
                 System.out.println(pidInfo.toString());
             } catch (IOException e) {
                 e.printStackTrace();
-            }*/
+            }
 
-            List<ProcessInfo> processesList = JProcesses.getProcessList();
+           /* List<ProcessInfo> processesList = JProcesses.getProcessList();
             for (final ProcessInfo processInfo : processesList) {
                 arrRunningApps.add(processInfo.getName().trim());
-            }
+            }*/
 
             view.inflateView(primaryStage, arrRunningApps);
         }
@@ -118,12 +117,32 @@ public class Client {
         }
 
         @Override
-        public void sendConnectionAckToServer() {
+        public void startScreenCapturing() {
+            if (isAppRunning) {
+                try {
+                    if (lastSentObj == null) {
+                        //first time
+                        view.startClientInitProcess();
+                    } else {
+                        //Every other time we'll send the Connection est. obj.
+                        //As the username & password might change. But as we are
+                        //identifying the client with the mac address so change in uname & pass
+                        //won't affect much on server side.
+                        view.onClientInitializedSuccessfully();
+                    }
+                } catch (Exception e) {
+
+                }
+            }
+        }
+
+        @Override
+        public void sendConnectionAckToServer(int noOfPartitions, String projectName, String projectPassword) {
             EstablishConnection establishConnection = new EstablishConnection();
             establishConnection.setClientId(1);
             establishConnection.setProjectName(projectName);
             establishConnection.setProjectPassword(projectPassword);
-            establishConnection.setRetransmissionTimeout(10000);
+            establishConnection.setRetransmissionTimeout(10000); //dummy value will use it later on
             byte[] objArray = Utils.convertObjToByteArray(establishConnection);
             lastSentObj = establishConnection;
             networkHelper.sendAckToServer(objArray);
@@ -226,15 +245,6 @@ public class Client {
         @Override
         public void setScreenCaptureRunningStatus(boolean isAppRunning) {
             this.isAppRunning = isAppRunning;
-            try {
-                if (lastSentObj == null) {
-                    view.startClientInitProcess();
-                } else {
-                    view.onImageSentSuccessfully();
-                }
-            } catch (Exception e) {
-
-            }
         }
 
         private static NetworkData setNetworkData() {

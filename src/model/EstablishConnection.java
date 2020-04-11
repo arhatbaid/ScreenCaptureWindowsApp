@@ -1,6 +1,8 @@
 package model;
 
 import java.io.Serializable;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 public class EstablishConnection implements Serializable {
     private static final long serialVersionUID = 6529685098267757690L;
@@ -10,6 +12,7 @@ public class EstablishConnection implements Serializable {
     private String projectPassword = "";
     private final int transmissionType = 0;
     private long retransmissionTimeout = 0;
+    private long timeStamp = Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis();
 
     public int getClientId() {
         return clientId;
@@ -51,6 +54,10 @@ public class EstablishConnection implements Serializable {
         this.retransmissionTimeout = retransmissionTimeout;
     }
 
+    public long getTimeStamp() {
+        return timeStamp;
+    }
+
     @Override
     public String toString() {
         return new StringBuffer("client_id = ")
@@ -70,6 +77,9 @@ public class EstablishConnection implements Serializable {
                 .append("\n")
                 .append("retransmission_timeout = ")
                 .append(getRetransmissionTimeout())
+                .append("\n")
+                .append("time_stamp_utc = ")
+                .append(getTimeStamp())
                 .append("\n")
                 .toString();
     }

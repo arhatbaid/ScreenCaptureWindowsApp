@@ -9,16 +9,14 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
-import java.util.TimerTask;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class ScreenCaptureTimer extends Application implements Client.View {
 
     private static Client.ClientPresenterImpl clientPresenterImpl = null;
+    private TextField txtProjectName = null, txtProjectPassword = null,
+            txtImagePartition = null;
     //TODO params will be linked with UI
-    private int noOfPartitions = 3;
-    private String projectName = "phantom";
-    private String projectPassword = "1234";
+
 //    private TimerTask task = null;
 //    private ScheduledExecutorService service = null;
 
@@ -28,7 +26,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
     @Override
     public void start(Stage primaryStage) {
-        clientPresenterImpl = new Client.ClientPresenterImpl(this, noOfPartitions, projectName, projectPassword);
+        clientPresenterImpl = new Client.ClientPresenterImpl(this);
         clientPresenterImpl.inflateView(primaryStage);
     }
 
@@ -45,17 +43,17 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         //project name
         Label Projlabel = new Label("Project Name:");
         GridPane.setConstraints(Projlabel, 0, 0);
-        TextField projText = new TextField();
-        projText.setPrefWidth(20);
-        GridPane.setConstraints(projText, 1, 0);
+        txtProjectName = new TextField();
+        txtProjectName.setPrefWidth(20);
+        GridPane.setConstraints(txtProjectName, 1, 0);
         Projlabel.setStyle("-fx-text-fill: #ff9a16;");
 
         //password
         Label password = new Label("Password:");
         GridPane.setConstraints(password, 0, 2);
         password.setStyle("-fx-text-fill: #ff9a16;");
-        PasswordField passtext = new PasswordField();
-        GridPane.setConstraints(passtext, 1, 2);
+        txtProjectPassword = new PasswordField();
+        GridPane.setConstraints(txtProjectPassword, 1, 2);
 
         //time
         Label time = new Label("Frame rate :");
@@ -68,8 +66,8 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         Label screen_parts = new Label("Screen Partition:");
         screen_parts.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(screen_parts, 0, 1);
-        TextField parts = new TextField("4");
-        GridPane.setConstraints(parts, 1, 1);
+        txtImagePartition = new TextField("4");
+        GridPane.setConstraints(txtImagePartition, 1, 1);
         //radio for cursor
        /* RadioButton rb1 = new RadioButton("Yes");
         GridPane.setConstraints(rb1, 1, 1);
@@ -102,7 +100,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         grid2.setPadding(new Insets(10, 10, 10, 10));
         grid2.setVgap(10);
         grid2.setHgap(10);
-        grid2.getChildren().addAll(mainScreen, time, timetext, screen_parts, parts, select, choice);
+        grid2.getChildren().addAll(mainScreen, time, timetext, screen_parts, txtImagePartition, select, choice);
         Scene advanceScene = new Scene(grid2, 370, 200);
         Button changescreen = new Button("Advanced");
         GridPane.setConstraints(changescreen, 0, 5);
@@ -113,16 +111,18 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         start.setStyle("-fx-text-fill: green;");
 
         start.setOnAction(e -> {
-            if (start.getText().equals("Start") && projText.getText().equals("phantom") && passtext.getText().equals("1234")) {
+            //TODO : The user should not be able to change the text-fields while the app is running.
+            if (start.getText().equals("Start") && (txtProjectName.getText().trim().isEmpty() || txtProjectPassword.getText().trim().isEmpty())) {
+                clientPresenterImpl.setScreenCaptureRunningStatus(false);
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Please insert the username and password!");
+//                alert.setContentText("");
+                alert.showAndWait();
+            } else if (start.getText().equals("Start")) {
                 start.setText("Stop");
                 clientPresenterImpl.setScreenCaptureRunningStatus(true);
-            } else if (start.getText().equals("Start") && (projText.getText().equals("") || passtext.getText().equals(""))) {
-                clientPresenterImpl.setScreenCaptureRunningStatus(false);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Error Dialog");
-                alert.setHeaderText("Look, an error dialog");
-                alert.setContentText("Please insert the username and password!");
-                alert.showAndWait();
+                clientPresenterImpl.startScreenCapturing();
             } else {
                 start.setText("Start");
                 clientPresenterImpl.setScreenCaptureRunningStatus(false);
@@ -133,7 +133,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         });
 
         GridPane.setConstraints(start, 1, 5);
-        grid.getChildren().addAll(Projlabel, projText, password, passtext, start, changescreen);
+        grid.getChildren().addAll(Projlabel, txtProjectName, password, txtProjectPassword, start, changescreen);
         Scene scene = new Scene(grid, 370, 200);
         mainScreen.setOnAction(e -> window.setScene(scene));
         scene.getStylesheets().add("css/phantom.css");
@@ -150,7 +150,10 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
     @Override
     public void onClientInitializedSuccessfully() throws Exception {
-        clientPresenterImpl.sendConnectionAckToServer();
+        int noOfPartitions = Integer.valueOf(txtImagePartition.getText().trim());
+        String projectName = txtProjectName.getText().trim();
+        String projectPassword = txtProjectPassword.getText().trim();
+        clientPresenterImpl.sendConnectionAckToServer(noOfPartitions, projectName, projectPassword);
         clientPresenterImpl.waitingForServerAck();
     }
 
