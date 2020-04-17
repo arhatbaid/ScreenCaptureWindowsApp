@@ -28,6 +28,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     public void start(Stage primaryStage) {
         clientPresenterImpl = new Client.ClientPresenterImpl(this);
         clientPresenterImpl.inflateView(primaryStage);
+        clientPresenterImpl.setSystemTray();
     }
 
     @Override
@@ -150,7 +151,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
     @Override
     public void onClientInitializedSuccessfully() throws Exception {
-        int noOfPartitions = Integer.valueOf(txtImagePartition.getText().trim());
+        int noOfPartitions = (int)Math.sqrt(Integer.valueOf(txtImagePartition.getText().trim()));
         String projectName = txtProjectName.getText().trim();
         String projectPassword = txtProjectPassword.getText().trim();
         clientPresenterImpl.sendConnectionAckToServer(noOfPartitions, projectName, projectPassword);

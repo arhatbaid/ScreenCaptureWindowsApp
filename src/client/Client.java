@@ -8,10 +8,14 @@ import network.NetworkHelper;
 import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class Client {
 
@@ -32,6 +36,8 @@ public class Client {
 
     public interface Presenter {
         void inflateView(Stage primaryStage);
+
+        void setSystemTray();
 
         void setScreenCaptureRunningStatus(boolean isAppRunning);
 
@@ -70,13 +76,14 @@ public class Client {
 
         @Override
         public void inflateView(Stage primaryStage) {
+
             ArrayList<String> arrRunningApps = new ArrayList<>();
             try {
                 String line;
                 HashMap<String, String> map = new HashMap<>();
                 StringBuilder pidInfo = new StringBuilder();
 //        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe /nh");
-                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq patel \" /fi \"status eq running\"");
+                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq cray \" /fi \"status eq running\"");
                 BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 String[] arrTemp;
                 while ((line = input.readLine()) != null) {
@@ -89,7 +96,7 @@ public class Client {
                     }
                 }
                 input.close();
-                System.out.println(pidInfo.toString());
+//                System.out.println(pidInfo.toString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -100,6 +107,75 @@ public class Client {
             }*/
 
             view.inflateView(primaryStage, arrRunningApps);
+        }
+
+        @Override
+        public void setSystemTray() {
+            final TrayIcon trayIcon;
+
+            if (SystemTray.isSupported()) {
+
+                SystemTray tray = SystemTray.getSystemTray();
+                Image image = Toolkit.getDefaultToolkit().getImage("C:/Capstone/WindowsApp/src/client/os.jpg");
+
+                MouseListener mouseListener = new MouseListener() {
+
+                    public void mouseClicked(MouseEvent e) {
+//                        System.out.println("Tray Icon - Mouse clicked!");
+                    }
+
+                    public void mouseEntered(MouseEvent e) {
+//                        System.out.println("Tray Icon - Mouse entered!");
+                    }
+
+                    public void mouseExited(MouseEvent e) {
+//                        System.out.println("Tray Icon - Mouse exited!");
+                    }
+
+                    public void mousePressed(MouseEvent e) {
+//                        System.out.println("Tray Icon - Mouse pressed!");
+                    }
+
+                    public void mouseReleased(MouseEvent e) {
+//                        System.out.println("Tray Icon - Mouse released!");
+                    }
+                };
+
+                ActionListener exitListener = new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        System.out.println("Exiting...");
+                        System.exit(0);
+                    }
+                };
+
+                PopupMenu popup = new PopupMenu();
+                MenuItem defaultItem = new MenuItem("Exit");
+                defaultItem.addActionListener(exitListener);
+                popup.add(defaultItem);
+
+                trayIcon = new TrayIcon(image, "Phantom", popup);
+
+                ActionListener actionListener = new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        trayIcon.displayMessage("Action Event",
+                                "An Action Event Has Been Performed!",
+                                TrayIcon.MessageType.INFO);
+                    }
+                };
+
+                trayIcon.setImageAutoSize(true);
+                trayIcon.addActionListener(actionListener);
+                trayIcon.addMouseListener(mouseListener);
+
+                try {
+                    tray.add(trayIcon);
+                } catch (AWTException e) {
+                    System.err.println("TrayIcon could not be added.");
+                }
+
+            } else {
+                //  System Tray is not supported
+            }
         }
 
         @Override
