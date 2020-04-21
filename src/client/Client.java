@@ -214,6 +214,7 @@ public class Client {
 
         @Override
         public void sendConnectionAckToServer(int noOfPartitions, String projectName, String projectPassword) {
+            this.noOfPartitions = noOfPartitions;
             EstablishConnection establishConnection = new EstablishConnection();
             establishConnection.setClientId(1);
             establishConnection.setProjectName(projectName);
@@ -270,8 +271,8 @@ public class Client {
                     networkHelper.sendAckToServer(arrImageDataObj);
                     Thread.sleep(80);
                     try {
-                        String s = networkHelper.receiveTempAckFromServer();
-                        if (s.contains("ACK"))
+                        String s = new String(networkHelper.receiveTempAckFromServer());
+                        if (!s.contains("ACK"))
                             throw new Exception();
                     } catch (Exception ex) {
                     }
