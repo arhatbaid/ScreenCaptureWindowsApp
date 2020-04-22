@@ -28,15 +28,6 @@ public class NetworkHelper {
         }
     }
 
-    public void sendDataToServer(byte[] data) {
-        try {
-            dataPacket = new DatagramPacket(data, data.length, InetAddress.getByName(networkData.getHostName()), networkData.getPortNumber());
-            socket.send(dataPacket);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public Object receiveAckFromServer() {
         Object object = null;
         byte[] arrData = new byte[MAX_BUFFER_SIZE];
@@ -53,7 +44,7 @@ public class NetworkHelper {
         return object;
     }
 
-    public void sendAckToServer(byte[] data) {
+    public void sendToServer(byte[] data) {
         try {
             if (dataPacket != null) {
                 dataPacket = new DatagramPacket(data, data.length, dataPacket.getAddress(), dataPacket.getPort());

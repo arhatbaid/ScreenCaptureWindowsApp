@@ -2,23 +2,23 @@ package windows_ui;
 
 import client.Client;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import model.ImageChunksMetaData;
 
 import java.util.ArrayList;
 
 public class ScreenCaptureTimer extends Application implements Client.View {
 
     private static Client.ClientPresenterImpl clientPresenterImpl = null;
+    ObservableList<String> arrRunningAppsList = FXCollections.observableList(new ArrayList<>());
     private TextField txtProjectName = null, txtProjectPassword = null,
             txtImagePartition = null;
-    //TODO params will be linked with UI
-
-//    private TimerTask task = null;
-//    private ScheduledExecutorService service = null;
 
     public static void main(String[] args) {
         launch(args);
@@ -28,10 +28,11 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     public void start(Stage primaryStage) {
         clientPresenterImpl = new Client.ClientPresenterImpl(this);
         clientPresenterImpl.inflateView(primaryStage);
+        clientPresenterImpl.getRunningTaskList();
     }
 
     @Override
-    public void inflateView(Stage primaryStage, ArrayList<String> arrRunningApps) {
+    public void inflateView(Stage primaryStage) {
         Stage window = primaryStage;
         window.setTitle("Phantom Eye");
 
@@ -89,7 +90,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         GridPane.setConstraints(select, 0, 2);
         ChoiceBox<String> choice = new ChoiceBox<>();
         choice.setPrefSize(200.0, 10.0);
-        choice.getItems().addAll(arrRunningApps);
+        choice.getItems().addAll(arrRunningAppsList);
         GridPane.setConstraints(choice, 1, 2);
         choice.getSelectionModel().selectedItemProperty().addListener((v, oldvalue, newvalue) -> System.out.println(newvalue));
 
@@ -113,7 +114,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         start.setOnAction(e -> {
             //TODO : The user should not be able to change the text-fields while the app is running.
             if (start.getText().equals("Start") && (txtProjectName.getText().trim().isEmpty() || txtProjectPassword.getText().trim().isEmpty())) {
-                clientPresenterImpl.setScreenCaptureRunningStatus(false);
+                clientPresenterImpl.setAppRunningStatus(false);
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error");
                 alert.setHeaderText("Please insert the username and password!");
@@ -121,11 +122,11 @@ public class ScreenCaptureTimer extends Application implements Client.View {
                 alert.showAndWait();
             } else if (start.getText().equals("Start")) {
                 start.setText("Stop");
-                clientPresenterImpl.setScreenCaptureRunningStatus(true);
-                clientPresenterImpl.startScreenCapturing();
+                clientPresenterImpl.setAppRunningStatus(true);
+                clientPresenterImpl.startApp();
             } else {
                 start.setText("Start");
-                clientPresenterImpl.setScreenCaptureRunningStatus(false);
+                clientPresenterImpl.setAppRunningStatus(false);
 //                task.cancel();
 //                service.shutdown();
 //                task = null;
@@ -144,12 +145,18 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     }
 
     @Override
+    public void onTaskListFetched(ArrayList<String> arrTaskList) {
+        arrRunningAppsList.clear();
+        arrRunningAppsList = FXCollections.observableList(arrTaskList);
+    }
+
+    @Override
     public void startClientInitProcess() {
         clientPresenterImpl.initClient();
     }
 
     @Override
-    public void onClientInitializedSuccessfully() throws Exception {
+    public void onClientInitializedSuccessfully() {
         int noOfPartitions = Integer.valueOf(txtImagePartition.getText().trim());
         String projectName = txtProjectName.getText().trim();
         String projectPassword = txtProjectPassword.getText().trim();
@@ -158,23 +165,32 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     }
 
     @Override
-    public void onConnectEstablishedSuccessfully() throws Exception {
-        clientPresenterImpl.sendMetadataToServer();
+    public void onConnectEstablishedSuccessfully() {
+        clientPresenterImpl.startScreenCapture();
+    }
+
+    @Override
+    public void onScreenCapturedSuccessfully(ImageChunksMetaData[] arrImageChunksmetaData) {
+        clientPresenterImpl.sendMetadataToServer(arrImageChunksmetaData);
         clientPresenterImpl.waitingForServerAck();
     }
 
     @Override
-    public void onMetaDataSentSuccessfully() throws Exception {
-        clientPresenterImpl.sendImageFileToServer();
+    public void onMetaDataSentSuccessfully(ImageChunksMetaData[] arrImageChunks) {
+        clientPresenterImpl.sendImageFileToServer(arrImageChunks);
         clientPresenterImpl.waitingForServerAck();
     }
 
     @Override
-    public void onImageSentSuccessfully() throws Exception {
+    public void onImageSentSuccessfully() {
         //Check if the screen capture is enabled/disabled & then init the process again
-        Thread.sleep(5000);
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         if (clientPresenterImpl.isScreenCaptureRunning()) {
-            clientPresenterImpl.sendMetadataToServer();
+            clientPresenterImpl.startScreenCapture();
             clientPresenterImpl.waitingForServerAck();
         } else {
             System.out.println("Screen capture app is disabled");

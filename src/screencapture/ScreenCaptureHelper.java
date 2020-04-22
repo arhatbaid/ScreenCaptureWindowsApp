@@ -3,6 +3,7 @@ package screencapture;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
+import javafx.application.Platform;
 import model.ImageChunksMetaData;
 
 import javax.imageio.ImageIO;
@@ -11,26 +12,24 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class ScreenCaptureHelper {
 
+    private Listener listener = null;
+    private Thread threadRunningTask = null;
     private long delay = 0l;
     private long period = 0l;
     private Robot robot = null;
-    private TimerTask task = null;
-    private ScheduledExecutorService service = null;
+//    private TimerTask task = null;
+//    private ScheduledExecutorService service = null;
 
     public ScreenCaptureHelper(long delay, long period) {
         this.delay = delay;
         this.period = period;
     }
 
-    public ScreenCaptureHelper() {
+    public ScreenCaptureHelper(Listener listener) {
+        this.listener = listener;
     }
 
     private WinDef.RECT activeWindowInfo() {
@@ -45,52 +44,64 @@ public class ScreenCaptureHelper {
         return rect;
     }
 
-    private ImageChunksMetaData[] takeScreenShot(WinDef.RECT rect, int noOfPartition) {
-        Rectangle captureRect = null;
-        BufferedImage screenFullImage = null;
-        ByteArrayOutputStream baos = null;
-        ImageChunksMetaData[] imageInByte = new ImageChunksMetaData[noOfPartition * noOfPartition];
-        String format = "jpeg";
-        String fileName = null;
-        File screenCapture = null;
+    private void takeScreenShot(WinDef.RECT rect, int noOfPartition) {
+        threadRunningTask = new Thread(() -> {
+            Rectangle captureRect = null;
+            BufferedImage screenFullImage = null;
+            ByteArrayOutputStream baos = null;
+            ImageChunksMetaData[] imageInByte = new ImageChunksMetaData[noOfPartition * noOfPartition];
+            String format = "jpeg";
+            String fileName = null;
+            File screenCapture = null;
 
-        int heightCell = (rect.bottom - rect.top) / noOfPartition;
-        int widthCell = (rect.right - rect.left) / noOfPartition;
-        int partno = 1;
+            int heightCell = (rect.bottom - rect.top) / noOfPartition;
+            int widthCell = (rect.right - rect.left) / noOfPartition;
+            int partno = 1;
 
-        try {
-            robot = new Robot();
-            for (int indexX = 0; indexX < noOfPartition; indexX++) {
-                for (int indexY = 0; indexY < noOfPartition; indexY++) {
-                    ImageChunksMetaData chunksMetaData = new ImageChunksMetaData();
-                    fileName = new StringBuffer("screen_").append(partno).append(".").append(format).toString();
-                    screenCapture = new File(fileName);
-                    captureRect = new Rectangle(rect.left + (widthCell * indexX), rect.top + (heightCell * indexY), widthCell, heightCell);
-                    screenFullImage = robot.createScreenCapture(captureRect);
-                    baos = new ByteArrayOutputStream();
-                    ImageIO.write(screenFullImage, format, baos);
-                    baos.flush();
-                    baos.toByteArray();
-                    baos.close();
-                    ImageIO.write(screenFullImage, format, screenCapture);
-                    System.out.println("FileName : " + fileName + ", Size : " + screenCapture.length());
-                    chunksMetaData.setImageNo(partno -1);
-                    chunksMetaData.setImageName(fileName);
-                    chunksMetaData.setImageSize(screenCapture.length());
-                    imageInByte[partno -1] = chunksMetaData;
-                    partno++;
+            try {
+                robot = new Robot();
+                for (int indexX = 0; indexX < noOfPartition; indexX++) {
+                    for (int indexY = 0; indexY < noOfPartition; indexY++) {
+                        ImageChunksMetaData chunksMetaData = new ImageChunksMetaData();
+                        fileName = new StringBuffer("screen_").append(partno).append(".").append(format).toString();
+                        screenCapture = new File(fileName);
+                        captureRect = new Rectangle(rect.left + (widthCell * indexX), rect.top + (heightCell * indexY), widthCell, heightCell);
+                        screenFullImage = robot.createScreenCapture(captureRect);
+                        baos = new ByteArrayOutputStream();
+                        ImageIO.write(screenFullImage, format, baos);
+                        baos.flush();
+                        baos.toByteArray();
+                        baos.close();
+                        ImageIO.write(screenFullImage, format, screenCapture);
+                        System.out.println("FileName : " + fileName + ", Size : " + screenCapture.length());
+                        chunksMetaData.setImageNo(partno - 1);
+                        chunksMetaData.setImageName(fileName);
+                        chunksMetaData.setImageSize(screenCapture.length());
+                        imageInByte[partno - 1] = chunksMetaData;
+                        partno++;
+                    }
                 }
+            } catch (AWTException | IOException ex) {
+                System.err.println(ex);
+                Platform.runLater(() -> {
+                    listener.onScreenCaptureFailed(noOfPartition);
+                    threadRunningTask.interrupt();
+                    threadRunningTask = null;
+                });
+            } finally {
+                robot = null;
+                Platform.runLater(() -> {
+                    listener.onScreenCaptureSuccessful(imageInByte);
+                    threadRunningTask.interrupt();
+                    threadRunningTask = null;
+                });
             }
-        } catch (AWTException | IOException ex) {
-            System.err.println(ex);
-        } finally {
-            robot = null;
-        }
-        return imageInByte;
+        });
+        threadRunningTask.start();
     }
 
-    public ImageChunksMetaData[] startCapturingScreen(int noOfPartition) {
-        return takeScreenShot(activeWindowInfo(), noOfPartition);
+    public void startCapturingScreen(int noOfPartition) {
+        takeScreenShot(activeWindowInfo(), noOfPartition);
         /*if (task != null) {
             return;
         }
@@ -108,14 +119,6 @@ public class ScreenCaptureHelper {
         long delay = 1000L;
         long period = 1000L;
         service.scheduleAtFixedRate(task, delay, period, TimeUnit.MILLISECONDS);*/
-    }
-
-    public void cancelScreenCapture() {
-        if (task == null || service == null) return;
-        task.cancel();
-        service.shutdown();
-        task = null;
-        service = null;
     }
 
     /* private boolean isDesiredApplicationIsRunning() throws IOException {
@@ -156,6 +159,13 @@ public class ScreenCaptureHelper {
         }
         return empty;
     }*/
+
+    public interface Listener {
+
+        void onScreenCaptureSuccessful(ImageChunksMetaData[] arrImageChunksMetaData);
+
+        void onScreenCaptureFailed(int noOfPartitions);
+    }
 
 
 }
