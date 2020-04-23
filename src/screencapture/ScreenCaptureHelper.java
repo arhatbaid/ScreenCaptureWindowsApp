@@ -73,7 +73,7 @@ public class ScreenCaptureHelper {
                         baos.toByteArray();
                         baos.close();
                         ImageIO.write(screenFullImage, format, screenCapture);
-                        System.out.println("FileName : " + fileName + ", Size : " + screenCapture.length());
+//                        System.out.println("FileName : " + fileName + ", Size : " + screenCapture.length());
                         chunksMetaData.setImageNo(partno - 1);
                         chunksMetaData.setImageName(fileName);
                         chunksMetaData.setImageSize(screenCapture.length());
@@ -81,6 +81,12 @@ public class ScreenCaptureHelper {
                         partno++;
                     }
                 }
+                Platform.runLater(() -> {
+                    System.out.println("Image Sent");
+                    listener.onScreenCaptureSuccessful(imageInByte);
+                    threadRunningTask.interrupt();
+                    threadRunningTask = null;
+                });
             } catch (AWTException | IOException ex) {
                 System.err.println(ex);
                 Platform.runLater(() -> {
@@ -90,11 +96,6 @@ public class ScreenCaptureHelper {
                 });
             } finally {
                 robot = null;
-                Platform.runLater(() -> {
-                    listener.onScreenCaptureSuccessful(imageInByte);
-                    threadRunningTask.interrupt();
-                    threadRunningTask = null;
-                });
             }
         });
         threadRunningTask.start();
