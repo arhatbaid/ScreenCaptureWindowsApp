@@ -5,33 +5,29 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import utils.PhantomMouseListener;
 
-import java.awt.*;
 import java.awt.MenuItem;
-import java.awt.event.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-public class ScreenCaptureTimer extends Application implements Client.View {
-    private TrayIcon trayIcon= null;
-    private Stage window = null;
-    private SystemTray tray=null;
+public class ScreenCaptureTimer extends Application implements Client.View,
+        ChangeListener<Boolean> {
     private static Client.ClientPresenterImpl clientPresenterImpl = null;
+    private TrayIcon trayIcon = null;
+    private Stage window = null;
+    private SystemTray tray = null;
     private TextField txtProjectName = null, txtProjectPassword = null,
             txtImagePartition = null;
-    //TODO params will be linked with UI
-
-//    private TimerTask task = null;
-//    private ScheduledExecutorService service = null;
 
     public static void main(String[] args) {
         launch(args);
@@ -157,95 +153,52 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         window.show();
 
         Platform.setImplicitExit(false);
-
-        window.showingProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> ov, Boolean t, Boolean t1) {
-                if (!t1.booleanValue()){
-                    clientPresenterImpl.setSystemTray();
-                } else {
-                    if(tray!=null && trayIcon!=null)
-                        tray.remove(trayIcon);
-                }
-            }
-        });
+        window.showingProperty().addListener(this);
     }
 
 
     @Override
     public void setSystemTray() {
 
-        if (SystemTray.isSupported()) {
-            tray = SystemTray.getSystemTray();
-            Image image = Toolkit.getDefaultToolkit().getImage("C:/Capstone/WindowsApp/src/client/os.jpg");
+        if (!SystemTray.isSupported()) return;
+
+        tray = SystemTray.getSystemTray();
+        Image image = Toolkit.getDefaultToolkit().getImage("C:/Capstone/WindowsApp/src/client/os.jpg");
 
 
-
-            MouseListener mouseListener = new MouseListener() {
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getButton() == MouseEvent.BUTTON1) {
-                        openWindow();
-                    }
+        PhantomMouseListener mouseListener = new PhantomMouseListener() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    openWindow();
                 }
-
-                public void mouseEntered(MouseEvent e) {
-//                    System.out.println("Tray Icon - Mouse entered!");
-                }
-
-                public void mouseExited(MouseEvent e) {
-//                    System.out.println("Tray Icon - Mouse exited!");
-                }
-
-                public void mousePressed(MouseEvent e) {
-//                        System.out.println("Tray Icon - Mouse pressed!");
-                }
-
-                public void mouseReleased(MouseEvent e) {
-//                        System.out.println("Tray Icon - Mouse released!");
-                }
-            };
-
-            ActionListener exitListener = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    System.exit(0);
-                }
-            };
-
-            ActionListener openActionListener = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                   openWindow();
-                }
-            };
-
-            PopupMenu popup = new PopupMenu();
-            java.awt.MenuItem openItem = new MenuItem("Open");
-            java.awt.MenuItem defaultItem = new MenuItem("Exit");
-
-            java.awt.Font defaultFont = java.awt.Font.decode(null);
-            java.awt.Font boldFont = defaultFont.deriveFont(java.awt.Font.BOLD);
-            openItem.setFont(boldFont);
-            defaultItem.setFont(boldFont);
-
-            openItem.addActionListener(openActionListener);
-            defaultItem.addActionListener(exitListener);
-            popup.add(openItem);
-            popup.add(defaultItem);
-
-
-            trayIcon = new TrayIcon(image, "Phantom", popup);
-            trayIcon.setImageAutoSize(true);
-            trayIcon.addActionListener(openActionListener);
-            trayIcon.addMouseListener(mouseListener);
-
-            try {
-                tray.add(trayIcon);
-            } catch (AWTException e) {
-                System.err.println("TrayIcon could not be added.");
             }
+        };
 
-        } else {
-            //  System Tray is not supported
+        PopupMenu popup = new PopupMenu();
+        java.awt.MenuItem openItem = new MenuItem("Open");
+        java.awt.MenuItem defaultItem = new MenuItem("Exit");
+
+        java.awt.Font defaultFont = java.awt.Font.decode(null);
+        java.awt.Font boldFont = defaultFont.deriveFont(java.awt.Font.BOLD);
+        openItem.setFont(boldFont);
+        defaultItem.setFont(boldFont);
+
+        openItem.addActionListener(e -> openWindow());
+        defaultItem.addActionListener(e -> System.exit(0));
+        popup.add(openItem);
+        popup.add(defaultItem);
+
+        trayIcon = new TrayIcon(image, "Phantom", popup);
+        trayIcon.setImageAutoSize(true);
+        trayIcon.addActionListener(e -> openWindow());
+        trayIcon.addMouseListener(mouseListener);
+
+        try {
+            tray.add(trayIcon);
+        } catch (AWTException e) {
+            System.err.println("TrayIcon could not be added.");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -255,13 +208,11 @@ public class ScreenCaptureTimer extends Application implements Client.View {
                 window.show();
                 window.toFront();
 
-                if(tray!=null && trayIcon!=null)
+                if (tray != null && trayIcon != null)
                     tray.remove(trayIcon);
             }
         });
     }
-
-
 
 
     @Override
@@ -271,7 +222,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
     @Override
     public void onClientInitializedSuccessfully() throws Exception {
-        int noOfPartitions = (int)Math.sqrt(Integer.valueOf(txtImagePartition.getText().trim()));
+        int noOfPartitions = (int) Math.sqrt(Integer.valueOf(txtImagePartition.getText().trim()));
         String projectName = txtProjectName.getText().trim();
         String projectPassword = txtProjectPassword.getText().trim();
         clientPresenterImpl.sendConnectionAckToServer(noOfPartitions, projectName, projectPassword);
@@ -299,6 +250,16 @@ public class ScreenCaptureTimer extends Application implements Client.View {
             clientPresenterImpl.waitingForServerAck();
         } else {
             System.out.println("Screen capture app is disabled");
+        }
+    }
+
+    @Override
+    public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+        if (!t1.booleanValue()) {
+            clientPresenterImpl.setSystemTray();
+        } else {
+            if (tray != null && trayIcon != null)
+                tray.remove(trayIcon);
         }
     }
 }

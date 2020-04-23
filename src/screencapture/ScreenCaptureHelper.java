@@ -11,11 +11,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class ScreenCaptureHelper {
 
@@ -74,10 +71,10 @@ public class ScreenCaptureHelper {
                     baos.close();
                     ImageIO.write(screenFullImage, format, screenCapture);
                     System.out.println("FileName : " + fileName + ", Size : " + screenCapture.length());
-                    chunksMetaData.setImageNo(partno -1);
+                    chunksMetaData.setImageNo(partno - 1);
                     chunksMetaData.setImageName(fileName);
                     chunksMetaData.setImageSize(screenCapture.length());
-                    imageInByte[partno -1] = chunksMetaData;
+                    imageInByte[partno - 1] = chunksMetaData;
                     partno++;
                 }
             }
