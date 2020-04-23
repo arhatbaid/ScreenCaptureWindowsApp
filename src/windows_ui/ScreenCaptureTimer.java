@@ -5,6 +5,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -14,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 
 import java.awt.*;
@@ -58,6 +60,17 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         Label Projlabel = new Label("Project Name:");
         GridPane.setConstraints(Projlabel, 0, 0);
         txtProjectName = new TextField();
+        txtProjectName.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+            if (!newValue) {
+                if(!txtProjectName.getText().matches("[A-Za-z\\s]+")){
+                    txtProjectName.setText("");
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Please insert characters only!");
+                    alert.show();
+                }
+            }
+        });
         txtProjectName.setPrefWidth(20);
         GridPane.setConstraints(txtProjectName, 1, 0);
         Projlabel.setStyle("-fx-text-fill: #ff9a16;");
@@ -73,14 +86,36 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         Label time = new Label("Frame rate :");
         GridPane.setConstraints(time, 0, 0);
         time.setStyle("-fx-text-fill: #ff9a16;");
-        TextField timetext = new TextField("10");
-        GridPane.setConstraints(timetext, 1, 0);
+        TextField frames = new TextField("10");
+        frames.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+            if (!newValue) {
+                if(!frames.getText().matches("[0-9]+")){
+                    frames.setText("");
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Please insert numbers only!");
+                    alert.show();
+                }
+            }
+        });
+        GridPane.setConstraints(frames, 1, 0);
 
         //screen selection
         Label screen_parts = new Label("Screen Partition:");
         screen_parts.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(screen_parts, 0, 1);
         txtImagePartition = new TextField("4");
+        txtImagePartition.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+            if (!newValue) {
+                if(!txtImagePartition.getText().matches("[0-9]+")){
+                    txtImagePartition.setText("");
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Please insert numbers only!");
+                    alert.show();
+                }
+            }
+        });
         GridPane.setConstraints(txtImagePartition, 1, 1);
         //radio for cursor
        /* RadioButton rb1 = new RadioButton("Yes");
@@ -114,7 +149,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         grid2.setPadding(new Insets(10, 10, 10, 10));
         grid2.setVgap(10);
         grid2.setHgap(10);
-        grid2.getChildren().addAll(mainScreen, time, timetext, screen_parts, txtImagePartition, select, choice);
+        grid2.getChildren().addAll(mainScreen, time, frames, screen_parts, txtImagePartition, select, choice);
         Scene advanceScene = new Scene(grid2, 370, 200);
         Button changescreen = new Button("Advanced");
         GridPane.setConstraints(changescreen, 0, 5);
@@ -153,6 +188,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         scene.getStylesheets().add("css/phantom.css");
         advanceScene.getStylesheets().add("css/phantom.css");
         window.setResizable(false);
+        window.initStyle(StageStyle.UTILITY);
         window.setScene(scene);
         window.show();
 
@@ -178,8 +214,6 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         if (SystemTray.isSupported()) {
             tray = SystemTray.getSystemTray();
             Image image = Toolkit.getDefaultToolkit().getImage("C:/Capstone/WindowsApp/src/client/os.jpg");
-
-
 
             MouseListener mouseListener = new MouseListener() {
                 public void mouseClicked(MouseEvent e) {

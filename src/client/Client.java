@@ -84,8 +84,8 @@ public class Client {
                 String line;
                 HashMap<String, String> map = new HashMap<>();
                 StringBuilder pidInfo = new StringBuilder();
-//        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe /nh");
-                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq cray \" /fi \"status eq running\"");
+//                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq cray \" /fi \"status eq running\"");
+                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq " + System.getProperty("user.name").toLowerCase() + " \" /fi \"status eq running\"");
                 BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 String[] arrTemp;
                 while ((line = input.readLine()) != null) {

@@ -65,7 +65,7 @@ public class ScreenCaptureHelper {
                     ImageChunksMetaData chunksMetaData = new ImageChunksMetaData();
                     fileName = new StringBuffer("screen_").append(partno).append(".").append(format).toString();
                     screenCapture = new File(fileName);
-                    captureRect = new Rectangle(rect.left + (widthCell * indexX), rect.top + (heightCell * indexY), widthCell, heightCell);
+                    captureRect = new Rectangle(rect.left + (widthCell * indexY), rect.top + (heightCell * indexX), widthCell, heightCell);
                     screenFullImage = robot.createScreenCapture(captureRect);
                     baos = new ByteArrayOutputStream();
                     ImageIO.write(screenFullImage, format, baos);
