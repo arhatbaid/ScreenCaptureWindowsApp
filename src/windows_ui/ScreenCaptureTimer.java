@@ -184,14 +184,8 @@ public class ScreenCaptureTimer extends Application implements Client.View {
     @Override
     public void onImageSentSuccessfully() {
         //Check if the screen capture is enabled/disabled & then init the process again
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         if (clientPresenterImpl.isScreenCaptureRunning()) {
             clientPresenterImpl.startScreenCapture();
-            clientPresenterImpl.waitingForServerAck();
         } else {
             System.out.println("Screen capture app is disabled");
         }

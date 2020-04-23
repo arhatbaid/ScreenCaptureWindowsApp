@@ -11,22 +11,12 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 
 public class ScreenCaptureHelper {
 
     private Listener listener = null;
     private Thread threadRunningTask = null;
-    private long delay = 0l;
-    private long period = 0l;
     private Robot robot = null;
-//    private TimerTask task = null;
-//    private ScheduledExecutorService service = null;
-
-    public ScreenCaptureHelper(long delay, long period) {
-        this.delay = delay;
-        this.period = period;
-    }
 
     public ScreenCaptureHelper(Listener listener) {
         this.listener = listener;
@@ -66,6 +56,8 @@ public class ScreenCaptureHelper {
                         fileName = new StringBuffer("screen_").append(partno).append(".").append(format).toString();
                         screenCapture = new File(fileName);
                         captureRect = new Rectangle(rect.left + (widthCell * indexX), rect.top + (heightCell * indexY), widthCell, heightCell);
+                        if (captureRect.height <= 0 && captureRect.width <= 0)
+                            throw new Exception("Rectangle's height or width should not be zero");
                         screenFullImage = robot.createScreenCapture(captureRect);
                         baos = new ByteArrayOutputStream();
                         ImageIO.write(screenFullImage, format, baos);
@@ -81,18 +73,23 @@ public class ScreenCaptureHelper {
                         partno++;
                     }
                 }
+                Platform.setImplicitExit(false);
                 Platform.runLater(() -> {
-                    System.out.println("Image Sent");
                     listener.onScreenCaptureSuccessful(imageInByte);
-                    threadRunningTask.interrupt();
-                    threadRunningTask = null;
+                    if (threadRunningTask != null){
+                        threadRunningTask.interrupt();
+                        threadRunningTask = null;
+                    }
                 });
-            } catch (AWTException | IOException ex) {
+            } catch (Exception ex) {
                 System.err.println(ex);
+                Platform.setImplicitExit(false);
                 Platform.runLater(() -> {
                     listener.onScreenCaptureFailed(noOfPartition);
-                    threadRunningTask.interrupt();
-                    threadRunningTask = null;
+                    if (threadRunningTask != null){
+                        threadRunningTask.interrupt();
+                        threadRunningTask = null;
+                    }
                 });
             } finally {
                 robot = null;
@@ -102,27 +99,22 @@ public class ScreenCaptureHelper {
     }
 
     public void startCapturingScreen(int noOfPartition) {
-        takeScreenShot(activeWindowInfo(), noOfPartition);
-        /*if (task != null) {
-            return;
+        if (threadRunningTask != null){
+            threadRunningTask.interrupt();
+            threadRunningTask = null;
         }
-            task = new TimerTask() {
-                @Override
-                public void run() {
-                    try {
-                        takeScreenShot(activeWindowInfo());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-        service = Executors.newSingleThreadScheduledExecutor();
-        long delay = 1000L;
-        long period = 1000L;
-        service.scheduleAtFixedRate(task, delay, period, TimeUnit.MILLISECONDS);*/
+        takeScreenShot(activeWindowInfo(), noOfPartition);
     }
 
-    /* private boolean isDesiredApplicationIsRunning() throws IOException {
+    public interface Listener {
+
+        void onScreenCaptureSuccessful(ImageChunksMetaData[] arrImageChunksMetaData);
+
+        void onScreenCaptureFailed(int noOfPartitions);
+    }
+}
+
+ /* private boolean isDesiredApplicationIsRunning() throws IOException {
         String line;
         StringBuilder pidInfo = new StringBuilder();
         Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe");
@@ -134,7 +126,6 @@ public class ScreenCaptureHelper {
         return pidInfo.toString().toLowerCase().contains(APPLICATION_NAME);
     }
 */
-
 
     /*private byte[] takeScreenShot(WinDef.RECT rect) {
         byte[] empty = new byte[0];
@@ -160,13 +151,3 @@ public class ScreenCaptureHelper {
         }
         return empty;
     }*/
-
-    public interface Listener {
-
-        void onScreenCaptureSuccessful(ImageChunksMetaData[] arrImageChunksMetaData);
-
-        void onScreenCaptureFailed(int noOfPartitions);
-    }
-
-
-}

@@ -177,6 +177,11 @@ public class Client {
 
         @Override
         public void startScreenCapture() {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             screenCaptureHelper.startCapturingScreen(noOfPartitions);
         }
 
@@ -224,25 +229,20 @@ public class Client {
                         byte[] arrImageDataObj = Utils.convertObjToByteArray(dataTransfer);
                         lastSentObj = dataTransfer;
                         networkHelper.sendToServer(arrImageDataObj);
+
                         Thread.sleep(80);
-                        try {
-                            String s = networkHelper.receiveTempAckFromServer();
-                            if (s.contains("ACK"))
-                                throw new Exception();
-                        } catch (Exception ex) {
-                        }
+
+                        Object receivedObj = networkHelper.receiveAckFromServer();
+                        if (!(receivedObj instanceof PacketAck))
+                            throw new Exception();
                         i += l;
                         seqNo++;
-                        //                    System.out.println("Progress : " + i * 100 / (int) fileSize);
                     }
                     fi.close();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
+                sendImageFileToServer(arrImageChunkData);
             }
         }
 
@@ -266,7 +266,7 @@ public class Client {
                     view.onMetaDataSentSuccessfully(((ImageMetaData) lastSentObj).getArrImageChunks());
                     //                System.out.println("ImageMetaData ack received = " + receivedObj);
                 } else if (lastSentObj instanceof DataTransfer) {
-                    //Continue till the last ack is received.
+                    //Continue till the last ack packet is received.
                     if (((DataTransfer) lastSentObj).getIsLastPacket() == 1) {
                         System.out.println("Image sent successfully");
                         view.onImageSentSuccessfully();
