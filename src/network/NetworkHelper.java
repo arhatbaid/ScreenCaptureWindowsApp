@@ -57,15 +57,15 @@ public class NetworkHelper {
         }
     }
 
-    public String receiveTempAckFromServer() {
+    public byte[] receiveTempAckFromServer() {
         byte[] data = new byte[MAX_BUFFER_SIZE];
         try {
             dataPacket = new DatagramPacket(data, data.length);
             socket.receive(dataPacket);
-            return new String(dataPacket.getData());
+            return dataPacket.getData();
         } catch (IOException e) {
             e.printStackTrace();
-            return "";
+            return new byte[0];
         }
     }
 

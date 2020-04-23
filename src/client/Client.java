@@ -18,6 +18,8 @@ public class Client {
 
         void onTaskListFetched(ArrayList<String> arrTaskList);
 
+        void setSystemTray();
+
         void startClientInitProcess();
 
         void onClientInitializedSuccessfully();
@@ -36,6 +38,8 @@ public class Client {
         void inflateView(Stage primaryStage);
 
         void getRunningTaskList();
+
+        void setSystemTray();
 
         void setAppRunningStatus(boolean isAppRunning);
 
@@ -74,15 +78,9 @@ public class Client {
             this.view = view;
         }
 
-        private static NetworkData setNetworkData() {
-            NetworkData networkData = new NetworkData();
-            networkData.setHostName("localhost");
-            networkData.setPortNumber(5555);
-            return networkData;
-        }
-
         @Override
         public void inflateView(Stage primaryStage) {
+
             view.inflateView(primaryStage);
         }
 
@@ -106,8 +104,8 @@ public class Client {
                 String line;
                 HashMap<String, String> map = new HashMap<>();
                 StringBuilder pidInfo = new StringBuilder();
-//        Process p = Runtime.getRuntime().exec(System.getenv("windir") + "\\system32\\" + "tasklist.exe /nh");
-                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq patel \" /fi \"status eq running\"");
+//                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq cray \" /fi \"status eq running\"");
+                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq " + System.getProperty("user.name").toLowerCase() + " \" /fi \"status eq running\"");
                 BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
                 String[] arrTemp;
                 while ((line = input.readLine()) != null) {
@@ -120,12 +118,17 @@ public class Client {
                     }
                 }
                 input.close();
-                System.out.println(pidInfo.toString());
+//                System.out.println(pidInfo.toString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
             return arrRunningApps;
 
+        }
+
+        @Override
+        public void setSystemTray() {
+            view.setSystemTray();
         }
 
         @Override
@@ -298,6 +301,13 @@ public class Client {
         @Override
         public void onScreenCaptureFailed(int noOfPartitions) {
             screenCaptureHelper.startCapturingScreen(noOfPartitions);
+        }
+
+        private static NetworkData setNetworkData() {
+            NetworkData networkData = new NetworkData();
+            networkData.setHostName("localhost");
+            networkData.setPortNumber(5555);
+            return networkData;
         }
     }
 

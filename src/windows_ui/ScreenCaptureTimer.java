@@ -4,19 +4,35 @@ import client.Client;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import model.ImageChunksMetaData;
+import javafx.stage.StageStyle;
+import utils.PhantomMouseListener;
+import utils.Utils;
 
+import java.awt.MenuItem;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-public class ScreenCaptureTimer extends Application implements Client.View {
-
+public class ScreenCaptureTimer extends Application implements Client.View,
+        ChangeListener<Boolean> {
     private static Client.ClientPresenterImpl clientPresenterImpl = null;
     ObservableList<String> arrRunningAppsList = FXCollections.observableList(new ArrayList<>());
+    private TrayIcon trayIcon = null;
+    private Stage window = null;
+    private SystemTray tray = null;
+    private Button buttonStart = null;
     private TextField txtProjectName = null, txtProjectPassword = null,
             txtImagePartition = null;
 
@@ -33,7 +49,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
     @Override
     public void inflateView(Stage primaryStage) {
-        Stage window = primaryStage;
+        window = primaryStage;
         window.setTitle("Phantom Eye");
 
         GridPane grid = new GridPane();
@@ -45,6 +61,15 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         Label Projlabel = new Label("Project Name:");
         GridPane.setConstraints(Projlabel, 0, 0);
         txtProjectName = new TextField();
+        Platform.runLater( () -> window.requestFocus() );
+        txtProjectName.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+            if (!newValue) {
+                if (!txtProjectName.getText().matches("[A-Za-z\\s]+")) {
+                    txtProjectName.setText("");
+                    Utils.showAlert(Alert.AlertType.ERROR, "Error" , "Please insert characters only!");
+                }
+            }
+        });
         txtProjectName.setPrefWidth(20);
         GridPane.setConstraints(txtProjectName, 1, 0);
         Projlabel.setStyle("-fx-text-fill: #ff9a16;");
@@ -60,14 +85,30 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         Label time = new Label("Frame rate :");
         GridPane.setConstraints(time, 0, 0);
         time.setStyle("-fx-text-fill: #ff9a16;");
-        TextField timetext = new TextField("10");
-        GridPane.setConstraints(timetext, 1, 0);
+        TextField frames = new TextField("10");
+        frames.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+            if (!newValue) {
+                if (!frames.getText().matches("[0-9]+")) {
+                    frames.setText("");
+                    Utils.showAlert(Alert.AlertType.ERROR, "Error" , "Please insert numbers only!");
+                }
+            }
+        });
+        GridPane.setConstraints(frames, 1, 0);
 
         //screen selection
         Label screen_parts = new Label("Screen Partition:");
         screen_parts.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(screen_parts, 0, 1);
         txtImagePartition = new TextField("4");
+        txtImagePartition.focusedProperty().addListener((arg0, oldValue, newValue) -> {
+            if (!newValue) {
+                if (!txtImagePartition.getText().matches("[0-9]+")) {
+                    txtImagePartition.setText("");
+                    Utils.showAlert(Alert.AlertType.ERROR, "Error" , "Please insert numbers only!");
+                }
+            }
+        });
         GridPane.setConstraints(txtImagePartition, 1, 1);
         //radio for cursor
        /* RadioButton rb1 = new RadioButton("Yes");
@@ -101,48 +142,120 @@ public class ScreenCaptureTimer extends Application implements Client.View {
         grid2.setPadding(new Insets(10, 10, 10, 10));
         grid2.setVgap(10);
         grid2.setHgap(10);
-        grid2.getChildren().addAll(mainScreen, time, timetext, screen_parts, txtImagePartition, select, choice);
+        grid2.getChildren().addAll(mainScreen, time, frames, screen_parts, txtImagePartition, select, choice);
         Scene advanceScene = new Scene(grid2, 370, 200);
         Button changescreen = new Button("Advanced");
         GridPane.setConstraints(changescreen, 0, 5);
         changescreen.setOnAction(e -> window.setScene(advanceScene));
 
         //start button
-        Button start = new Button("Start");
-        start.setStyle("-fx-text-fill: green;");
+        buttonStart = new Button("Start");
+        buttonStart.setStyle("-fx-text-fill: green;");
 
-        start.setOnAction(e -> {
+        buttonStart.setOnAction(e -> {
             //TODO : The user should not be able to change the text-fields while the app is running.
-            if (start.getText().equals("Start") && (txtProjectName.getText().trim().isEmpty() || txtProjectPassword.getText().trim().isEmpty())) {
+            if (buttonStart.getText().equals("Start") && (txtProjectName.getText().trim().isEmpty() || txtProjectPassword.getText().trim().isEmpty())) {
                 clientPresenterImpl.setAppRunningStatus(false);
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText("Please insert the username and password!");
-//                alert.setContentText("");
-                alert.showAndWait();
-            } else if (start.getText().equals("Start")) {
-                start.setText("Stop");
+                Utils.showAlert(Alert.AlertType.ERROR, "Error" , "Please insert the username and password!");
+            } else if (buttonStart.getText().equals("Start")) {
+                buttonStart.setText("Stop");
                 clientPresenterImpl.setAppRunningStatus(true);
                 clientPresenterImpl.startApp();
             } else {
-                start.setText("Start");
+                buttonStart.setText("Start");
                 clientPresenterImpl.setAppRunningStatus(false);
-//                task.cancel();
-//                service.shutdown();
-//                task = null;
             }
         });
 
-        GridPane.setConstraints(start, 1, 5);
-        grid.getChildren().addAll(Projlabel, txtProjectName, password, txtProjectPassword, start, changescreen);
+        GridPane.setConstraints(buttonStart, 1, 5);
+        grid.getChildren().addAll(Projlabel, txtProjectName, password, txtProjectPassword, buttonStart, changescreen);
         Scene scene = new Scene(grid, 370, 200);
         mainScreen.setOnAction(e -> window.setScene(scene));
         scene.getStylesheets().add("css/phantom.css");
         advanceScene.getStylesheets().add("css/phantom.css");
         window.setResizable(false);
+        window.initStyle(StageStyle.UTILITY);
         window.setScene(scene);
         window.show();
+
+        Platform.setImplicitExit(false);
+        window.showingProperty().addListener(this);
     }
+
+
+    @Override
+    public void setSystemTray() {
+
+        if (!SystemTray.isSupported()) return;
+
+        tray = SystemTray.getSystemTray();
+        Image image = Toolkit.getDefaultToolkit().getImage("C:/Capstone/WindowsApp/src/client/os.jpg");
+
+
+        PhantomMouseListener mouseListener = new PhantomMouseListener() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    openWindow();
+                }
+            }
+        };
+
+        PopupMenu popup = new PopupMenu();
+        java.awt.MenuItem openItem = new MenuItem("Open");
+        java.awt.MenuItem startItem = new MenuItem(clientPresenterImpl.isScreenCaptureRunning()?"Stop":"Start");
+        java.awt.MenuItem defaultItem = new MenuItem("Exit");
+
+        java.awt.Font defaultFont = java.awt.Font.decode(null);
+        java.awt.Font boldFont = defaultFont.deriveFont(java.awt.Font.BOLD);
+        openItem.setFont(boldFont);
+        defaultItem.setFont(boldFont);
+        startItem.setFont(boldFont);
+
+        startItem.addActionListener(e -> {
+            if (!clientPresenterImpl.isScreenCaptureRunning()){
+                startItem.setLabel("Stop");
+                buttonStart.setText("Stop");
+                clientPresenterImpl.setAppRunningStatus(true);
+                clientPresenterImpl.startApp();
+            } else {
+                startItem.setLabel("Start");
+                buttonStart.setText("Start");
+                clientPresenterImpl.setAppRunningStatus(false);
+            }
+        });
+
+        openItem.addActionListener(e -> openWindow());
+        defaultItem.addActionListener(e -> System.exit(0));
+        popup.add(openItem);
+        popup.add(startItem);
+        popup.add(defaultItem);
+
+        trayIcon = new TrayIcon(image, "Phantom", popup);
+        trayIcon.setImageAutoSize(true);
+        trayIcon.addActionListener(e -> openWindow());
+        trayIcon.addMouseListener(mouseListener);
+
+        try {
+            tray.add(trayIcon);
+        } catch (AWTException e) {
+            System.err.println("TrayIcon could not be added.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void openWindow() {
+        Platform.runLater(() -> {
+            if (window != null) {
+                window.show();
+                window.toFront();
+
+                if (tray != null && trayIcon != null)
+                    tray.remove(trayIcon);
+            }
+        });
+    }
+
 
     @Override
     public void onTaskListFetched(ArrayList<String> arrTaskList) {
@@ -157,7 +270,7 @@ public class ScreenCaptureTimer extends Application implements Client.View {
 
     @Override
     public void onClientInitializedSuccessfully() {
-        int noOfPartitions = Integer.valueOf(txtImagePartition.getText().trim());
+        int noOfPartitions = (int) Math.sqrt(Integer.valueOf(txtImagePartition.getText().trim()));
         String projectName = txtProjectName.getText().trim();
         String projectPassword = txtProjectPassword.getText().trim();
         clientPresenterImpl.sendConnectionAckToServer(noOfPartitions, projectName, projectPassword);
@@ -188,6 +301,16 @@ public class ScreenCaptureTimer extends Application implements Client.View {
             clientPresenterImpl.startScreenCapture();
         } else {
             System.out.println("Screen capture app is disabled");
+        }
+    }
+
+    @Override
+    public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
+        if (!t1.booleanValue()) {
+            clientPresenterImpl.setSystemTray();
+        } else {
+            if (tray != null && trayIcon != null)
+                tray.remove(trayIcon);
         }
     }
 }

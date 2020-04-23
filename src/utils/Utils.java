@@ -1,5 +1,7 @@
 package utils;
 
+import javafx.scene.control.Alert;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -28,5 +30,13 @@ public class Utils {
             e.printStackTrace();
         }
         return outputStream.toByteArray();
+    }
+
+
+    public static void showAlert(Alert.AlertType error, String title, String header) {
+        Alert alert = new Alert(error);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.show();
     }
 }
