@@ -3,16 +3,9 @@ package client;
 import javafx.stage.Stage;
 import model.*;
 import network.NetworkHelper;
-//import org.jutils.jprocesses.JProcesses;
-//import org.jutils.jprocesses.model.ProcessInfo;
 import screencapture.ScreenCaptureHelper;
 import utils.Utils;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
