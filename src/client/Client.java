@@ -306,6 +306,7 @@ public class Client {
         private static NetworkData setNetworkData() {
             NetworkData networkData = new NetworkData();
             networkData.setHostName("localhost");
+//            networkData.setHostName("76.30.19.215");
             networkData.setPortNumber(5555);
             return networkData;
         }
