@@ -1,3 +1,5 @@
+/*This is the class that'll run.
+* This class contains the UI elements(View of the MVP) */
 package windows_ui;
 
 import client.Client;
@@ -40,6 +42,7 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         launch(args);
     }
 
+    /*This code is called one for inflate UI and get the running application list*/
     @Override
     public void start(Stage primaryStage) {
         clientPresenterImpl = new Client.ClientPresenterImpl(this);
@@ -47,6 +50,8 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         clientPresenterImpl.getRunningTaskList();
     }
 
+    /*All the UI code sits here
+    * from system tray to the window elements*/
     @Override
     public void inflateView(Stage primaryStage) {
         window = primaryStage;
@@ -62,6 +67,7 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         GridPane.setConstraints(Projlabel, 0, 0);
         txtProjectName = new TextField();
         Platform.runLater( () -> window.requestFocus() );
+        //project name textfiled validation
         txtProjectName.focusedProperty().addListener((arg0, oldValue, newValue) -> {
             if (!newValue) {
                 if (!txtProjectName.getText().matches("[A-Za-z\\s]+")) {
@@ -86,6 +92,7 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         GridPane.setConstraints(time, 0, 0);
         time.setStyle("-fx-text-fill: #ff9a16;");
         TextField frames = new TextField("10");
+        //frames textfiled validation
         frames.focusedProperty().addListener((arg0, oldValue, newValue) -> {
             if (!newValue) {
                 if (!frames.getText().matches("[0-9]+")) {
@@ -101,6 +108,8 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         screen_parts.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(screen_parts, 0, 1);
         txtImagePartition = new TextField("4");
+        //Image partition textfiled validation
+        //P.S Note : Only 1,4,9,16,25,36 should be sent
         txtImagePartition.focusedProperty().addListener((arg0, oldValue, newValue) -> {
             if (!newValue) {
                 if (!txtImagePartition.getText().matches("[0-9]+")) {
@@ -126,6 +135,7 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         rb2.setToggleGroup(radio);*/
 
         // drop down list
+        /*need to link with the fetched application list*/
         Label select = new Label("Select Application:");
         select.setStyle("-fx-text-fill: #ff9a16;");
         GridPane.setConstraints(select, 0, 2);
@@ -154,6 +164,7 @@ public class ScreenCaptureTimer extends Application implements Client.View,
 
         buttonStart.setOnAction(e -> {
             //TODO : The user should not be able to change the text-fields while the app is running.
+            //user can start & stop the client app.
             if (buttonStart.getText().equals("Start") && (txtProjectName.getText().trim().isEmpty() || txtProjectPassword.getText().trim().isEmpty())) {
                 clientPresenterImpl.setAppRunningStatus(false);
                 Utils.showAlert(Alert.AlertType.ERROR, "Error" , "Please insert the username and password!");
@@ -183,6 +194,7 @@ public class ScreenCaptureTimer extends Application implements Client.View,
     }
 
 
+    /*System tray configuration*/
     @Override
     public void setSystemTray() {
 
@@ -244,6 +256,8 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         }
     }
 
+    /*This piece of code opens the window from system tray
+    * Platform.runLater is used to map the output from the worker thread to UI thread.*/
     private void openWindow() {
         Platform.runLater(() -> {
             if (window != null) {
@@ -257,17 +271,22 @@ public class ScreenCaptureTimer extends Application implements Client.View,
     }
 
 
+    /*Callback after the running app list is fetched.
+    * here we can map the list to the observableList which can be set to the dropdown UI */
     @Override
     public void onTaskListFetched(ArrayList<String> arrTaskList) {
         arrRunningAppsList.clear();
         arrRunningAppsList = FXCollections.observableList(arrTaskList);
     }
 
+    /*Callback to start client*/
     @Override
     public void startClientInitProcess() {
         clientPresenterImpl.initClient();
     }
 
+    /*callback if the client is initialized successfully
+    * After sending the auth credentials to client(Connection request), it waits for the response*/
     @Override
     public void onClientInitializedSuccessfully() {
         int noOfPartitions = (int) Math.sqrt(Integer.valueOf(txtImagePartition.getText().trim()));
@@ -277,23 +296,32 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         clientPresenterImpl.waitingForServerAck();
     }
 
+    /*Callback : if the server successfully responds for the connection request
+    * Then client starts to capture the screen*/
     @Override
     public void onConnectEstablishedSuccessfully() {
         clientPresenterImpl.startScreenCapture();
     }
 
+    /*Callback : Screen captured successfully
+    * Now the clinet will send the image metadata(no_of_images, size, name, etc)*/
     @Override
     public void onScreenCapturedSuccessfully(ImageChunksMetaData[] arrImageChunksmetaData) {
         clientPresenterImpl.sendMetadataToServer(arrImageChunksmetaData);
         clientPresenterImpl.waitingForServerAck();
     }
 
+    /*Callback : Once the image metadata is sent successfully then the client starts
+    * sending the actual images*/
     @Override
     public void onMetaDataSentSuccessfully(ImageChunksMetaData[] arrImageChunks) {
         clientPresenterImpl.sendImageFileToServer(arrImageChunks);
         clientPresenterImpl.waitingForServerAck();
     }
 
+    /*Callback : Once all the images are sent to the server.
+    * If the user havent stopped the app then we'll redo the process from screen capturing
+    * else we'll just print the disabled status*/
     @Override
     public void onImageSentSuccessfully() {
         //Check if the screen capture is enabled/disabled & then init the process again
@@ -304,6 +332,11 @@ public class ScreenCaptureTimer extends Application implements Client.View,
         }
     }
 
+    /*Overriden method : Called when you close/open the app
+    * If you close the app then system tray is init
+    * while the app open it remove the app icon from system tray
+    *
+    * The app icon should be in tray when the app is closed and this calback takes care of that logic.*/
     @Override
     public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
         if (!t1.booleanValue()) {

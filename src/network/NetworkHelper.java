@@ -1,3 +1,4 @@
+//Class for all sort of UDP network calls
 package network;
 
 import model.NetworkData;
@@ -9,11 +10,11 @@ import java.net.*;
 
 public class NetworkHelper {
 
-    private NetworkData networkData = null;
+    private static final int MAX_BUFFER_SIZE = 65507;
     private static DatagramSocket socket = null;
     private static InetAddress address = null;
     private static DatagramPacket dataPacket = null;
-    private static final int MAX_BUFFER_SIZE= 65507;
+    private NetworkData networkData = null;
 
     public NetworkHelper(NetworkData networkData) {
         this.networkData = networkData;
@@ -54,18 +55,6 @@ public class NetworkHelper {
             socket.send(dataPacket);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    public byte[] receiveTempAckFromServer() {
-        byte[] data = new byte[MAX_BUFFER_SIZE];
-        try {
-            dataPacket = new DatagramPacket(data, data.length);
-            socket.receive(dataPacket);
-            return dataPacket.getData();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new byte[0];
         }
     }
 

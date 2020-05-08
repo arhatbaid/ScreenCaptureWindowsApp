@@ -1,3 +1,8 @@
+/*Client class contains all the business logic and interfaces of the client module
+* View Interface : The ScreenCaptureTimer will have all the overridden view methods.
+* Presenter Interface : The presenterImpl calss will have all the overridden methods
+* ClientPresenterImpl : This class is responsible for all the logical work*/
+
 package client;
 
 import javafx.application.Platform;
@@ -80,10 +85,11 @@ public class Client {
 
         @Override
         public void inflateView(Stage primaryStage) {
-
             view.inflateView(primaryStage);
         }
 
+        /*Fetch the application list on background thread and
+        * push it to the Main thread using Platform.runLater*/
         @Override
         public void getRunningTaskList() {
             threadRunningTask = new Thread(() -> {
@@ -97,13 +103,14 @@ public class Client {
             threadRunningTask.start();
         }
 
-        //Add testing annotation
+        //Add testing annotation to test from test class
         private ArrayList<String> getTask() {
             ArrayList<String> arrRunningApps = new ArrayList<>();
             try {
                 String line;
                 HashMap<String, String> map = new HashMap<>();
                 StringBuilder pidInfo = new StringBuilder();
+                //The Bash script needs to update to remove some unnecessary application
 //                Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq cray \" /fi \"status eq running\"");
                 Process p = Runtime.getRuntime().exec("tasklist /v /fo csv /nh /fi \"username eq " + System.getProperty("user.name").toLowerCase() + " \" /fi \"status eq running\"");
                 BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -131,6 +138,11 @@ public class Client {
             view.setSystemTray();
         }
 
+        /*When init client is called there is a ton of work done here
+        * ScreenCaptureHelper init
+        * Set the network data (port number & Address)
+        * Init Udp connection
+        * Callback to notify the ScreenCaptureTimer class after the work is done*/
         @Override
         public void initClient() {
             try {
@@ -145,6 +157,9 @@ public class Client {
             }
         }
 
+        /*When startApp is called on the start/stop button click
+         * lastSentObj is updated after every packet is sent to server
+         * If its null means the app haven't been started*/
         @Override
         public void startApp() {
             if (isAppRunning) {
@@ -165,6 +180,7 @@ public class Client {
             }
         }
 
+        /*There the Model EstablishConnection is sent to the server with info to request the connection*/
         @Override
         public void sendConnectionAckToServer(int noOfPartitions, String projectName, String projectPassword) {
             this.noOfPartitions = noOfPartitions;
@@ -178,16 +194,13 @@ public class Client {
             networkHelper.sendToServer(objArray);
         }
 
+
         @Override
         public void startScreenCapture() {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             screenCaptureHelper.startCapturingScreen(noOfPartitions);
         }
 
+        /*There the Model ImageMetaData is sent to the server with Image info*/
         @Override
         public void sendMetadataToServer(ImageChunksMetaData[] arrImageChunkData) {
             ImageMetaData imageMetaData = new ImageMetaData();
@@ -199,6 +212,8 @@ public class Client {
             networkHelper.sendToServer(objArray);
         }
 
+        /*There the Model DataTransfer is sent to the server with Image data
+        * We send a part of image and wait for the server response*/
         @Override
         public void sendImageFileToServer(ImageChunksMetaData[] arrImageChunkData) {
             int seqNo = 2;
@@ -222,6 +237,12 @@ public class Client {
                             dataTransfer.setIsFirstPacketOfImageBlock(1);
                         }
                         l = fi.read(arrImageData);
+                        //There can be multiple datatransfer for each image block.
+                        //Here we set setIsLastPacketOfImageBlock to 1 and let the server know that
+                        //the particular image has ended.
+                        //Here we set setIsLastPacket to let the server that this is our last packet
+                        //all the image data havebeen transfered.
+                        //The errors & retransmissions are not handled yet
                         if (l < MAX_IMAGE_DATA_ARRAY_SIZE)
                             dataTransfer.setIsLastPacketOfImageBlock(1);
                         if (index == arrSize - 1) {
@@ -233,6 +254,7 @@ public class Client {
                         lastSentObj = dataTransfer;
                         networkHelper.sendToServer(arrImageDataObj);
 
+                        //Here we wait for the server request that's why 80ms sleep is used
                         Thread.sleep(80);
 
                         Object receivedObj = networkHelper.receiveAckFromServer();
@@ -249,6 +271,10 @@ public class Client {
             }
         }
 
+        /*Server sents ack in form of PacketAck model
+        * All the required data will be in this packet.
+        * If server sends data in any other format then its curroupt.
+        * Once data is received then we'll take the next step accordingly */
         @Override
         public void waitingForServerAck() {
             try {
@@ -293,6 +319,9 @@ public class Client {
             this.isAppRunning = isAppRunning;
         }
 
+        /*onScreenCaptureSuccessful & onScreenCaptureFailed are the callbacks from SCreenCapturehelper method
+        * If successfull then process to metadata transfer
+        * else try the capture part again */
         @Override
         public void onScreenCaptureSuccessful(ImageChunksMetaData[] arrImageChunksMetaData) {
             view.onScreenCapturedSuccessfully(arrImageChunksMetaData);
@@ -303,6 +332,7 @@ public class Client {
             screenCaptureHelper.startCapturingScreen(noOfPartitions);
         }
 
+        /*Set basic adddress & port number*/
         private static NetworkData setNetworkData() {
             NetworkData networkData = new NetworkData();
             networkData.setHostName("localhost");

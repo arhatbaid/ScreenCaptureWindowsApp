@@ -1,3 +1,4 @@
+/*Class for Capturing screen with the success & failure callbacks*/
 package screencapture;
 
 import com.sun.jna.Native;

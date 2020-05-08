@@ -1,3 +1,5 @@
+/*Demo class : Just to know the efficency of the screen capture protocol
+* Code not used in the project.*/
 package windows_ui;
 
 import javafx.application.Application;
